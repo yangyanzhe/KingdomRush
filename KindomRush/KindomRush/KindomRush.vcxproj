@@ -40,8 +40,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Irvine;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Irvine;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\lib\Irvine;..\lib\masm32\include</IncludePath>
+    <LibraryPath>..\lib\Irvine;..\lib\masm32\lib</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
