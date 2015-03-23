@@ -40,7 +40,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\lib\Irvine;..\lib\masm32\include</IncludePath>
+    <IncludePath>..\lib\Irvine;..\lib\masm32\include;$(IncludePath)</IncludePath>
     <LibraryPath>..\lib\Irvine;..\lib\masm32\lib</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -51,7 +51,8 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <EntryPointSymbol>WinMain</EntryPointSymbol>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
       <AdditionalDependencies>Irvine32.lib;Kernel32.Lib;User32.Lib</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -71,6 +72,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <MASM Include="kingdomRush.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="kingdomRush.inc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="images\StartBG.bmp" />
+    <Image Include="patches\Board.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

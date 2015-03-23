@@ -1,140 +1,234 @@
-; Windows Application                   (WinApp.asm)
+TITLE main.asm      
+.386      
+.model flat,stdcall      
+option casemap:none    
 
-; This program displays a resizable application window and
-; several popup message boxes.
-; Thanks to Tom Joyce for creating a prototype
-; from which this program was derived.
+INCLUDELIB kernel32.lib
+INCLUDELIB user32.lib
+INCLUDELIB gdi32.lib
+INCLUDELIB masm32.lib
+INCLUDELIB comctl32.lib
+INCLUDELIB winmm.lib
+INCLUDELIB gdiplus.lib
 
-INCLUDE Irvine32.inc
-INCLUDE GraphWin.inc
+INCLUDE masm32.inc
+INCLUDE windows.inc
+INCLUDE user32.inc
+INCLUDE kernel32.inc
+INCLUDE gdi32.inc
+INCLUDE comctl32.inc
+INCLUDE winmm.inc 
+INCLUDE gdiplus.inc
+        
+INCLUDE kingdomRush.inc 
+     
+.code      
+start:      
+	INVOKE GetTickCount
+	INVOKE nseed, eax
 
-;==================== DATA =======================
-.data
+    INVOKE GetModuleHandle,0    ;获取应用程序模块句柄   
+    mov hInstance,eax           ;保存应用程序句柄 
 
-AppLoadMsgTitle BYTE "Application Loaded",0
-AppLoadMsgText  BYTE "This window displays when the WM_CREATE "
-	            BYTE "message is received",0
+	INVOKE GetCommandLine
+	mov CommandLine, eax
+    
+	INVOKE WinMain,hInstance,0,CommandLine,SW_SHOWDEFAULT      
+    INVOKE ExitProcess,eax      ;退出程序,并返回eax的值   
 
-PopupTitle BYTE "Popup Window",0
-PopupText  BYTE "This window was activated by a "
-	       BYTE "WM_LBUTTONDOWN message",0
+;-------------------------------------------------------
+WinMain PROC hInst:DWORD, 
+			 hPrevInst:DWORD,
+			 CmdLine:DWORD,
+			 CmdShow:DWORD      
+;
+; Create the window and menu
+; Receives: hInst(handler for current App), hPrevInst etc.
+; Returns:  nothing
+;--------------------------------------------------------
+    LOCAL wndclass:WNDCLASSEX      
+    LOCAL msg:MSG      
+	LOCAL dwStyle:DWORD
+	LOCAL scrWidth:DWORD
+	LOCAL scrHeight:DWORD
 
-GreetTitle BYTE "Main Window Active",0
-GreetText  BYTE "This window is shown immediately after "
-	       BYTE "CreateWindow and UpdateWindow are called.",0
+	INVOKE GdiplusStartup, ADDR GdiPlusStartupToken, ADDR GdiInput, 0
 
-CloseMsg   BYTE "WM_CLOSE message received",0
+	;初始化窗口
+    mov wndclass.cbSize,sizeof WNDCLASSEX      
+    mov wndclass.style,CS_HREDRAW or CS_VREDRAW or CS_BYTEALIGNWINDOW      
+    mov wndclass.lpfnWndProc,OFFSET WndProc      
+    mov wndclass.cbClsExtra,0      
+    mov wndclass.cbWndExtra,0      
+    mov eax,hInst      
+    mov wndclass.hInstance,eax     
 
-ErrorTitle  BYTE "Error",0
-WindowName  BYTE "ASM Windows App",0
-className   BYTE "ASMWin",0
+	INVOKE CreateSolidBrush,BgColor
+	mov bgBrush, eax
+    mov wndclass.hbrBackground, eax      
+    mov wndclass.lpszMenuName,0      
+    mov wndclass.lpszClassName,OFFSET ClassName      
+    
+	INVOKE LoadIcon, 0, IDI_APPLICATION
+	mov wndclass.hIcon, eax
+	mov wndclass.hIconSm, eax
 
-; Define the Application's Window class structure.
-MainWin WNDCLASS <NULL,WinProc,NULL,NULL,NULL,NULL,NULL, \
-	COLOR_WINDOW,NULL,className>
+    INVOKE LoadCursor,0,IDC_ARROW      
+	mov wndclass.hCursor,eax            
 
-msg	      MSGStruct <>
-winRect   RECT <>
-hMainWnd  DWORD ?
-hInstance DWORD ?
+	;创建画刷、字体
+	INVOKE CreateSolidBrush,TextBgColor
+	mov textBgBrush, eax
+	
+	INVOKE CreateFont, 80,
+					0,
+					0,
+					0,
+					FW_EXTRABOLD,
+					FALSE,
+					FALSE,
+					FALSE,
+					DEFAULT_CHARSET,
+					OUT_TT_PRECIS,
+					CLIP_DEFAULT_PRECIS,
+					CLEARTYPE_QUALITY,
+					DEFAULT_PITCH or FF_DONTCARE,
+					OFFSET FontName
+    mov titleFont, eax
+	INVOKE CreateFont, 22,
+                    0,
+                    0,
+                    0,
+                    FW_EXTRABOLD,
+                    FALSE,
+                    FALSE,
+                    FALSE,
+                    DEFAULT_CHARSET,
+                    OUT_TT_PRECIS,
+                    CLIP_DEFAULT_PRECIS,
+                    CLEARTYPE_QUALITY,
+                    DEFAULT_PITCH or FF_DONTCARE,
+                    OFFSET FontName
+    mov textFont, eax
 
-;=================== CODE =========================
-.code
-WinMain PROC
-; Get a handle to the current process.
-	INVOKE GetModuleHandle, NULL
-	mov hInstance, eax
-	mov MainWin.hInstance, eax
+	;计算窗口位置，使窗口位于屏幕中央
+	mov dwStyle, WS_OVERLAPPEDWINDOW
+	mov eax, WS_SIZEBOX
+	not eax
+	and dwStyle, eax
+	INVOKE GetSystemMetrics,SM_CXSCREEN
+	mov scrWidth, eax
+	INVOKE GetSystemMetrics,SM_CYSCREEN
+	mov scrHeight, eax
+	mov edx, 0
+	mov ebx, 2
+	mov eax, scrWidth
+	sub eax, WndWidth
+	div ebx
+	mov WndOffX, eax
+	mov eax, scrHeight
+	sub eax, WndHeight
+	div ebx
+	mov WndOffY, eax
 
-; Load the program's icon and cursor.
-	INVOKE LoadIcon, NULL, IDI_APPLICATION
-	mov MainWin.hIcon, eax
-	INVOKE LoadCursor, NULL, IDC_ARROW
-	mov MainWin.hCursor, eax
+	;注册用户定义的窗口类
+    INVOKE RegisterClassEx,ADDR wndclass        
+	
+	;创建窗口
+	INVOKE CreateWindowEx,WS_EX_OVERLAPPEDWINDOW, ADDR ClassName,      
+                            ADDR WindowName,      
+                            dwStyle,      
+                            WndOffX,WndOffY,WndWidth,WndHeight,      
+                            0,0,      
+                            hInst,0           
+	.IF eax == 0		
+		call ErrorHandler
+		jmp Exit_Program
+	.ENDIF		  
 
-; Register the window class.
-	INVOKE RegisterClass, ADDR MainWin
-	.IF eax == 0
-	  call ErrorHandler
-	  jmp Exit_Program
-	.ENDIF
+	;保存窗口句柄
+    mov   hWnd,eax                          
 
-; Create the application's main window.
-; Returns a handle to the main window in EAX.
-	INVOKE CreateWindowEx, 0, ADDR className,
-	  ADDR WindowName,MAIN_WINDOW_STYLE,
-	  CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,
-	  CW_USEDEFAULT,NULL,NULL,hInstance,NULL
-	mov hMainWnd,eax
+	;载入图片
+	INVOKE LoadBitmap, hInstance, 101
+	mov BmpBackground, eax
 
-; If CreateWindowEx failed, display a message & exit.
-	.IF eax == 0
-	  call ErrorHandler
-	  jmp  Exit_Program
-	.ENDIF
+	;显示绘制窗口
+	INVOKE ShowWindow,hWnd,SW_SHOWNORMAL   
+    INVOKE UpdateWindow,hWnd
 
-; Show and draw the window.
-	INVOKE ShowWindow, hMainWnd, SW_SHOW
-	INVOKE UpdateWindow, hMainWnd
-
-; Display a greeting message.
-	INVOKE MessageBox, hMainWnd, ADDR GreetText,
-	  ADDR GreetTitle, MB_OK
-
-; Begin the program's message-handling loop.
-Message_Loop:
-	; Get next message from the queue.
-	INVOKE GetMessage, ADDR msg, NULL,NULL,NULL
-
-	; Quit if no more messages.
-	.IF eax == 0
-	  jmp Exit_Program
-	.ENDIF
-
-	; Relay the message to the program's WinProc.
-	INVOKE DispatchMessage, ADDR msg
-    jmp Message_Loop
+	;开始程序的持续消息处理循环     
+MessageLoop:      
+    INVOKE GetMessage,ADDR msg,0,0,0        ;获取消息      
+    cmp eax,0      
+    je Exit_Program      
+    INVOKE TranslateMessage,ADDR msg        ;转换键盘消息   
+    INVOKE DispatchMessage,ADDR msg         ;分发消息   
+    jmp MessageLoop  
+    
+	;关闭时钟
+	INVOKE KillTimer, hWnd, 1
+	INVOKE GdiplusShutdown, GdiPlusStartupToken
 
 Exit_Program:
-	  INVOKE ExitProcess,0
+	INVOKE ExitProcess, 0  
+	ret
 WinMain ENDP
 
-;-----------------------------------------------------
-WinProc PROC,
-	hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
-; The application's message handler, which handles
-; application-specific messages. All other messages
-; are forwarded to the default Windows message
-; handler.
-;-----------------------------------------------------
-	mov eax, localMsg
+;----------------------------------------------------------------------   
+WndProc PROC hWin:DWORD, uMsg:DWORD, wParam:DWORD, lParam:DWORD      
+;
+;消息处理函数
+;----------------------------------------------------------------------
+    LOCAL hPopMenu      ;一级菜单句柄
+	LOCAL ps  :PAINTSTRUCT
+	LOCAL pt  :POINT
 
-	.IF eax == WM_LBUTTONDOWN		; mouse button?
-	  INVOKE MessageBox, hWnd, ADDR PopupText,
-	    ADDR PopupTitle, MB_OK
-	  jmp WinProcExit
-	.ELSEIF eax == WM_CREATE		; create window?
-	  INVOKE MessageBox, hWnd, ADDR AppLoadMsgText,
-	    ADDR AppLoadMsgTitle, MB_OK
-	  jmp WinProcExit
-	.ELSEIF eax == WM_CLOSE		; close window?
-	  INVOKE MessageBox, hWnd, ADDR CloseMsg,
-	    ADDR WindowName, MB_OK
-	  INVOKE PostQuitMessage,0
-	  jmp WinProcExit
-	.ELSE		; other message?
-	  INVOKE DefWindowProc, hWnd, localMsg, wParam, lParam
-	  jmp WinProcExit
-	.ENDIF
+    .IF uMsg == WM_CREATE      
+		INVOKE CreateMenu   
+		mov hMenu, eax   
+		.IF eax
+			INVOKE CreatePopupMenu      ;创建一级菜单   
+			mov hPopMenu, eax           ;保存一级菜单句柄   
+			INVOKE AppendMenu, hPopMenu, NULL, MENU_NEWGAMEM, addr MenuFileNewM   ;添加二级菜单
+			INVOKE AppendMenu, hPopMenu, NULL, MENU_NEWGAMEH, addr MenuFileNewH   ;添加二级菜单
+			INVOKE AppendMenu, hPopMenu, NULL, MENU_SAVEGAME, addr MenuFileSave   ;添加二级菜单
+			INVOKE AppendMenu, hPopMenu, NULL, MENU_PLAYMUSIC, addr MenuFilePlay   ;添加二级菜单
+			INVOKE AppendMenu, hPopMenu, NULL, MENU_STOPMUSIC, addr MenuFileStop   ;添加二级菜单
+			INVOKE AppendMenu, hMenu, MF_POPUP, hPopMenu, addr MenuFile                ;添加一级菜单   
+			INVOKE CreatePopupMenu      ;创建一级菜单   
+			mov hPopMenu, eax           ;保存一级菜单句柄   
+			INVOKE AppendMenu, hPopMenu, NULL, MENU_ABOUTAUTHOR, addr MenuAboutAuthor   ;添加二级菜单
+			INVOKE AppendMenu, hPopMenu, NULL, MENU_HELPINFO, addr MenuAboutHelpInfo   ;添加二级菜单
+			INVOKE AppendMenu, hMenu, MF_POPUP, hPopMenu, addr MenuAbout                ;添加一级菜单   
+		.ENDIF   
+		INVOKE SetMenu, hWin, hMenu     ;设置菜单
+		jmp WndProcExit
+	.ELSEIF uMsg == WM_CLOSE
+		;保存游戏进度对话框
+		INVOKE PostQuitMessage,0
+		jmp WndProcExit
+	.ELSEIF uMsg == WM_PAINT
+		INVOKE BeginPaint, hWin, ADDR ps
+		mov hDC, eax
+		INVOKE PaintProc, hWin
+		INVOKE EndPaint, hWin, ADDR ps
+		jmp WndProcExit
+    .ELSE
+        INVOKE DefWindowProc,hWin,uMsg,wParam,lParam    ;调用默认消息处理函数   
+        jmp WndProcExit      
+    .ENDIF      
+    ;xor eax,eax
 
-WinProcExit:
-	ret
-WinProc ENDP
+WndProcExit:      
+    ret      
+WndProc endp      
 
-;---------------------------------------------------
+;------------------------------------------------------------------
 ErrorHandler PROC
-; Display the appropriate system error message.
-;---------------------------------------------------
+;
+;错误处理，打印出错误信息
+;------------------------------------------------------------------
 .data
 pErrorMsg  DWORD ?		; ptr to error message
 messageID  DWORD ?
@@ -148,12 +242,48 @@ messageID  DWORD ?
 	  ADDR pErrorMsg,NULL,NULL
 
 	; Display the error message.
-	INVOKE MessageBox,NULL, pErrorMsg, ADDR ErrorTitle,
-	  MB_ICONERROR+MB_OK
+	INVOKE MessageBox, NULL, pErrorMsg, ADDR ErrorTitle, MB_ICONERROR+MB_OK
 
 	; Free the error message string.
 	INVOKE LocalFree, pErrorMsg
 	ret
 ErrorHandler ENDP
 
-END WinMain
+;-----------------------------------------------------------------------
+PaintProc PROC hWin:DWORD
+;
+; Painting Function
+;-----------------------------------------------------------------------
+
+	LOCAL hOld: DWORD
+	LOCAL xIndex: DWORD
+	LOCAL yIndex: DWORD
+	LOCAL textRect: RECT
+	LOCAL movedis: DWORD
+	LOCAL scale: DWORD  ;1~100
+
+	mov movedis, 0
+
+    INVOKE CreateCompatibleDC, hDC
+    mov memDC, eax
+	INVOKE CreateCompatibleDC, hDC
+    mov imgDC, eax
+	INVOKE CreateCompatibleBitmap, hDC, WndWidth, WndHeight
+	mov hBitmap, eax
+    INVOKE SelectObject, memDC, hBitmap
+    mov hOld, eax
+	INVOKE FillRect, memDC, ADDR rect, bgBrush
+	
+	;画背景
+	INVOKE SelectObject, imgDC, BmpBackground
+	INVOKE StretchBlt, memDC, ClientOffX, ClientOffY, ClientWidth, ClientHeight, imgDC,0, 0, BgBmpWidth, BgBmpHeight, SRCCOPY
+	
+	INVOKE BitBlt, hDC, 0, 0, WndWidth, WndHeight, memDC, 0, 0, SRCCOPY 
+    INVOKE SelectObject,hDC,hOld
+    INVOKE DeleteDC,memDC
+	INVOKE DeleteDC,imgDC
+	INVOKE DeleteObject, hBitmap
+    ret
+PaintProc ENDP
+
+end start
