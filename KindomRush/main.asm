@@ -17,12 +17,15 @@ INCLUDELIB  user32.lib
 
 hInstance       dd ?
 hMainWnd        dd ?
+hIcon           dd ?
 classname       db "Game Application", 0
 windowname      db "Kingdom Rush", 0
-wndWidth        dd 568
-wndHeight       dd 691
+wndWidth        dd 600
+wndHeight       dd 600
 wndX            dd ?
 wndY            dd ?
+
+IDI_ICON        EQU 101
 
 ;=================== CODE =========================
 .code
@@ -40,10 +43,11 @@ WinMain PROC
     INVOKE  RtlZeroMemory, ADDR lWndClass, SIZEOF lWndClass
 
     ; 注册窗口
-    INVOKE  LoadIcon, NULL, IDI_APPLICATION
+    INVOKE  LoadIcon, hInstance, IDI_ICON
+    mov     hIcon, eax
     mov     lWndClass.hIcon, eax
     mov     lWndClass.hIconSm, eax
-    INVOKE  LoadCursor, NULL, IDC_ARROW
+    INVOKE  LoadCursor, hInstance, IDC_ARROW
     mov     lWndClass.hCursor, eax
 
     mov     lWndClass.cbSize, SIZEOF WNDCLASSEX
@@ -75,10 +79,10 @@ WinMain PROC
 	mov     wndY, eax
 
     INVOKE  CreateWindowEx, 
-            WS_EX_OVERLAPPEDWINDOW, 
+            0, 
             OFFSET classname,
             OFFSET windowname, 
-            WS_OVERLAPPEDWINDOW,
+            WS_OVERLAPPED or WS_SYSMENU or WS_MINIMIZEBOX ,
             wndX, 
             wndY, 
             wndWidth,
@@ -127,10 +131,11 @@ WinProc PROC,
 
     .IF eax == WM_LBUTTONDOWN       ; 鼠标事件
       jmp    WinProcExit
-    .ELSEIF eax == WM_CREATE        ; 创建窗口事件
-      jmp    WinProcExit
     .ELSEIF eax == WM_CLOSE         ; 关闭窗口事件
       INVOKE PostQuitMessage, 0
+      jmp    WinProcExit
+    .ELSEIF eax == WM_CREATE        ; 创建窗口事件
+      INVOKE SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
       jmp    WinProcExit
     .ELSE                           ; 其他事件
       INVOKE DefWindowProc, hWnd, localMsg, wParam, lParam
@@ -154,7 +159,7 @@ ErrorTitle  db "Error", 0
 .code
 
     INVOKE  GetLastError ; Returns message ID in EAX
-    mov     messageID,eax
+    mov     messageID, eax
 
     ; Get the corresponding message string.
     INVOKE  FormatMessage, FORMAT_MESSAGE_ALLOCATE_BUFFER + \
