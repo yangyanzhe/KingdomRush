@@ -1,4 +1,4 @@
-IFNDEF STRUCT_INT
+IFNDEF STRUCT_INC
 
 location struct
 	x DWORD ?

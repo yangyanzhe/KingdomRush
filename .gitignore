@@ -22,3 +22,5 @@
 *.aps
 Debug
 Release
+*.sln
+*.vcxproj*
