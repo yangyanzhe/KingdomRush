@@ -9,8 +9,11 @@ INCLUDELIB gdi32.lib
 INCLUDELIB masm32.lib
 INCLUDELIB comctl32.lib
 INCLUDELIB winmm.lib
+INCLUDELIB ole32.lib
 INCLUDELIB gdiplus.lib
+INCLUDELIB msimg32.lib
 
+INCLUDE msimg32.inc
 INCLUDE masm32.inc
 INCLUDE windows.inc
 INCLUDE user32.inc
@@ -19,9 +22,13 @@ INCLUDE gdi32.inc
 INCLUDE comctl32.inc
 INCLUDE winmm.inc 
 INCLUDE gdiplus.inc
+INCLUDE ole32.inc
         
 INCLUDE kingdomRush.inc 
-     
+
+INCLUDE data.inc
+
+
 .code      
 start:      
 	INVOKE GetTickCount
@@ -51,8 +58,6 @@ WinMain PROC hInst:DWORD,
 	LOCAL dwStyle:DWORD
 	LOCAL scrWidth:DWORD
 	LOCAL scrHeight:DWORD
-
-	INVOKE GdiplusStartup, ADDR GdiPlusStartupToken, ADDR GdiInput, 0
 
 	;初始化窗口
     mov wndclass.cbSize,sizeof WNDCLASSEX      
@@ -123,13 +128,13 @@ WinMain PROC hInst:DWORD,
 	mov edx, 0
 	mov ebx, 2
 	mov eax, scrWidth
-	sub eax, WndWidth
+	sub eax, window.w
 	div ebx
-	mov WndOffX, eax
+	mov window.x, eax
 	mov eax, scrHeight
-	sub eax, WndHeight
+	sub eax, window.h
 	div ebx
-	mov WndOffY, eax
+	mov window.y, eax
 
 	;注册用户定义的窗口类
     INVOKE RegisterClassEx,ADDR wndclass        
@@ -138,7 +143,7 @@ WinMain PROC hInst:DWORD,
 	INVOKE CreateWindowEx,WS_EX_OVERLAPPEDWINDOW, ADDR ClassName,      
                             ADDR WindowName,      
                             dwStyle,      
-                            WndOffX,WndOffY,WndWidth,WndHeight,      
+                            window.x,window.y,window.w,window.h,      
                             0,0,      
                             hInst,0           
 	.IF eax == 0		
@@ -149,10 +154,12 @@ WinMain PROC hInst:DWORD,
 	;保存窗口句柄
     mov   hWnd,eax                          
 
-	;载入图片
+	;加载图片
 	INVOKE LoadBitmap, hInstance, 101
 	mov BmpBackground, eax
-
+	INVOKE LoadBitmap, hInstance, 102
+	mov BmpBoard, eax
+	
 	;显示绘制窗口
 	INVOKE ShowWindow,hWnd,SW_SHOWNORMAL   
     INVOKE UpdateWindow,hWnd
@@ -168,8 +175,7 @@ MessageLoop:
     
 	;关闭时钟
 	INVOKE KillTimer, hWnd, 1
-	INVOKE GdiplusShutdown, GdiPlusStartupToken
-
+	
 Exit_Program:
 	INVOKE ExitProcess, 0  
 	ret
@@ -180,7 +186,7 @@ WndProc PROC hWin:DWORD, uMsg:DWORD, wParam:DWORD, lParam:DWORD
 ;
 ;消息处理函数
 ;----------------------------------------------------------------------
-    LOCAL hPopMenu      ;一级菜单句柄
+    LOCAL hPopMenu      				;一级菜单句柄
 	LOCAL ps  :PAINTSTRUCT
 	LOCAL pt  :POINT
 
@@ -260,6 +266,8 @@ PaintProc PROC hWin:DWORD
 	LOCAL yIndex: DWORD
 	LOCAL textRect: RECT
 	LOCAL movedis: DWORD
+	LOCAL graphics:HANDLE
+	;LOCAL pbitmap:HBITMAP
 	LOCAL scale: DWORD  ;1~100
 
 	mov movedis, 0
@@ -268,18 +276,21 @@ PaintProc PROC hWin:DWORD
     mov memDC, eax
 	INVOKE CreateCompatibleDC, hDC
     mov imgDC, eax
-	INVOKE CreateCompatibleBitmap, hDC, WndWidth, WndHeight
+	INVOKE CreateCompatibleBitmap, hDC, window.w, window.h
 	mov hBitmap, eax
     INVOKE SelectObject, memDC, hBitmap
     mov hOld, eax
+
 	INVOKE FillRect, memDC, ADDR rect, bgBrush
-	
-	;画背景
+	INVOKE SelectObject,hDC,hOld
+
+	; 显示图片
 	INVOKE SelectObject, imgDC, BmpBackground
-	INVOKE StretchBlt, memDC, ClientOffX, ClientOffY, ClientWidth, ClientHeight, imgDC,0, 0, BgBmpWidth, BgBmpHeight, SRCCOPY
-	
-	INVOKE BitBlt, hDC, 0, 0, WndWidth, WndHeight, memDC, 0, 0, SRCCOPY 
-    INVOKE SelectObject,hDC,hOld
+	INVOKE StretchBlt, memDC, client.x, client.y, client.w, client.h, imgDC, bgstart.x, bgstart.y, bgstart.w, bgstart.h, SRCCOPY
+	INVOKE SelectObject, imgDC, BmpBoard
+	INVOKE TransparentBlt, memDC, board.x, board.y, board.w, board.h, imgDC, 0, 0, board.w, board.h, tColor
+
+	INVOKE BitBlt, hDC, 0, 0, window.w, window.h, memDC, 0, 0, SRCCOPY 
     INVOKE DeleteDC,memDC
 	INVOKE DeleteDC,imgDC
 	INVOKE DeleteObject, hBitmap

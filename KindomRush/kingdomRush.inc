@@ -1,12 +1,23 @@
 IFNDEF KINGDOM_RUSH
 
+INCLUDE struct.inc
+
 MAX_MAP_SIZE = 20
 MAP_SIZE = MAX_MAP_SIZE + 1
 
 ;===================Protos====================
 WinMain PROTO :DWORD,:DWORD,:DWORD,:DWORD      
 WndProc PROTO :DWORD,:DWORD,:DWORD,:DWORD
+gdiplusLoadBitmapFromResource proto hInst:HMODULE, lpName:LPSTR, lpType:LPSTR, pBitmapFromStream:DWORD
 PaintProc PROTO :DWORD 
+drawPng proto g:HANDLE, png:DWORD, x:DWORD, y:DWORD, loc:location, :DWORD
+
+GdiplusStartupInput STRUCT
+	GdiplusVersion DWORD ?
+	DebugEventCallback DWORD ?
+	SuppressBackgroundThread DWORD ?
+	SuppressExternalCodecs DWORD ?
+GdiplusStartupInput ends
 
 ;====================Data=====================
 .data
@@ -27,25 +38,15 @@ PaintProc PROTO :DWORD
 	CurrentBmp dd 0
 	rect RECT <>
 
+	tColor dd 0FFFFFFh				; transparent color
 	
-	WndWidth dd 720					;Window Parameter
-	WndHeight dd 660
-	ClientWidth dd 700
-	ClientHeight dd 600
-	WndOffX dd 850
-	WndOffY dd 150
 	BgColor dd 00EFF8FAh
 	TextBgColor dd 00A0ADBBh
-	BgBmpWidth dd 700
-	BgBmpHeight dd 600
-	ClientOffX dd 0
-	ClientOffY dd 0
 	Padding dd 12
 
 	BmpBackground dd ?					; bmp handler
-	GdiPlusStartupToken	dd ?			; GDI+ start up token
-	GdiInput dd ?						; Gdiplus::GdiplusStartupInput
-			
+	BmpBoard dd ?
+				
 	GameTitle db "Kingdom Rush!",0		; String Definition
 	FontName db "Arial", 0
 	WinMsg db "YOU WIN!!!", 0
