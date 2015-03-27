@@ -1,106 +1,118 @@
 TITLE Windows Application                   (WinApp.asm)
 
-; This program displays a resizable application window and
-; several popup message boxes.
-; Thanks to Tom Joyce for creating a prototype
-; from which this program was derived.
+    .386      
+    .model flat,stdcall      
+    option casemap:none
 
-INCLUDE Irvine32.inc
-INCLUDE GraphWin.inc
+INCLUDE     windows.inc
+INCLUDE     gdi32.inc
+INCLUDELIB  gdi32.lib
+INCLUDE     kernel32.inc
+INCLUDELIB  kernel32.lib
+INCLUDE     user32.inc
+INCLUDELIB  user32.lib
 
 ;==================== DATA =======================
 .data
 
-AppLoadMsgTitle BYTE "Application Loaded", 0
-AppLoadMsgText  BYTE "This window displays when the WM_CREATE "
-                BYTE "message is received", 0
-
-PopupTitle      BYTE "Popup Window", 0
-PopupText       BYTE "This window was activated by a "
-                BYTE "WM_LBUTTONDOWN message", 0
-
-KeydownTitle    BYTE "Welcome", 0
-KeydownText     BYTE "This window was activated by a "
-                BYTE "WM_KEYDOWN message", 0
-
-GreetTitle      BYTE "Main Window Active", 0
-GreetText       BYTE "This window is shown immediately after "
-                BYTE "CreateWindow and UpdateWindow are called.", 0
-
-CloseMsg        BYTE "Bye", 0
-
-ErrorTitle      BYTE "Error", 0
-WindowName      BYTE "ASM Windows App", 0
-className       BYTE "ASMWin", 0
-
-; Define the Application's Window class structure.
-MainWin         WNDCLASS <NULL,WinProc,NULL,NULL,NULL,NULL,NULL, \
-                          COLOR_WINDOW,NULL,className>
-
-msg             MSGStruct <>
-winRect         RECT <>
-hMainWnd        DWORD ?
-hInstance       DWORD ?
+hInstance       dd ?
+hMainWnd        dd ?
+classname       db "Game Application", 0
+windowname      db "Kingdom Rush", 0
+wndWidth        dd 568
+wndHeight       dd 691
+wndX            dd ?
+wndY            dd ?
 
 ;=================== CODE =========================
 .code
+
 WinMain PROC
-; Get a handle to the current process.
+    LOCAL   lWndClass: WNDCLASSEX
+    LOCAL   lMsg: MSG
+    LOCAL   lScreenWidth: DWORD
+    LOCAL   lScreenHeight: DWORD
+
+    ; 获取句柄
     INVOKE  GetModuleHandle, NULL
     mov     hInstance, eax
-    mov     MainWin.hInstance, eax
+    mov     lWndClass.hInstance, eax
+    INVOKE  RtlZeroMemory, ADDR lWndClass, SIZEOF lWndClass
 
-; Load the program's icon and cursor.
+    ; 注册窗口
     INVOKE  LoadIcon, NULL, IDI_APPLICATION
-    mov     MainWin.hIcon, eax
+    mov     lWndClass.hIcon, eax
+    mov     lWndClass.hIconSm, eax
     INVOKE  LoadCursor, NULL, IDC_ARROW
-    mov     MainWin.hCursor, eax
+    mov     lWndClass.hCursor, eax
 
-; Register the window class.
-    INVOKE  RegisterClass, ADDR MainWin
+    mov     lWndClass.cbSize, SIZEOF WNDCLASSEX
+    mov     lWndClass.hbrBackground, COLOR_WINDOW + 1
+    mov     lWndClass.lpfnWndProc, OFFSET WinProc
+    mov     lWndClass.lpszClassName, OFFSET classname
+    mov     lWndClass.style, CS_HREDRAW or CS_VREDRAW
+
+    INVOKE  RegisterClassEx, ADDR lWndClass
     .IF eax == 0
       call  ErrorHandler
       jmp   Exit_Program
     .ENDIF
 
-; Create the application's main window.
-; Returns a handle to the main window in EAX.
-    INVOKE  CreateWindowEx, 0, ADDR className,
-            ADDR WindowName,MAIN_WINDOW_STYLE,
-            CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,
-            CW_USEDEFAULT,NULL,NULL,hInstance,NULL
+    ; 创建窗口（移至屏幕中央）
+    INVOKE  GetSystemMetrics, SM_CXSCREEN
+	mov     lScreenWidth, eax
+	INVOKE  GetSystemMetrics, SM_CYSCREEN
+	mov     lScreenHeight, eax
+    mov     ebx, 2
+	mov     edx, 0
+	mov     eax, lScreenWidth
+	sub     eax, wndWidth
+	div     ebx
+	mov     wndX, eax
+	mov     eax, lScreenHeight
+	sub     eax, wndHeight
+	div     ebx
+	mov     wndY, eax
+
+    INVOKE  CreateWindowEx, 
+            WS_EX_OVERLAPPEDWINDOW, 
+            OFFSET classname,
+            OFFSET windowname, 
+            WS_OVERLAPPEDWINDOW,
+            wndX, 
+            wndY, 
+            wndWidth,
+            wndHeight, 
+            NULL, 
+            NULL, 
+            hInstance, 
+            NULL
     mov     hMainWnd,eax
 
-; If CreateWindowEx failed, display a message & exit.
     .IF eax == 0
       call  ErrorHandler
       jmp   Exit_Program
     .ENDIF
 
-; Show and draw the window.
+    ; 绘制窗口
     INVOKE  ShowWindow, hMainWnd, SW_SHOW
     INVOKE  UpdateWindow, hMainWnd
 
-; Display a greeting message.
-    INVOKE  MessageBox, hMainWnd, ADDR GreetText,
-            ADDR GreetTitle, MB_OK
-
-; Begin the program's message-handling loop.
+    ; 消息循环
 Message_Loop:
-    ; Get next message from the queue.
-    INVOKE  GetMessage, ADDR msg, NULL,NULL,NULL
+    INVOKE  GetMessage, ADDR lMsg, NULL, NULL, NULL
 
-    ; Quit if no more messages.
+    ; 退出WM_QUIT
     .IF eax == 0
       jmp   Exit_Program
     .ENDIF
 
-    ; Relay the message to the program's WinProc.
-    INVOKE  DispatchMessage, ADDR msg
+    INVOKE  TranslateMessage, ADDR lMsg
+    INVOKE  DispatchMessage, ADDR lMsg
     jmp     Message_Loop
 
 Exit_Program:
-    INVOKE  ExitProcess,0
+    ret
 WinMain ENDP
 
 ;-----------------------------------------------------
@@ -113,20 +125,14 @@ WinProc PROC,
 ;-----------------------------------------------------
     mov      eax, localMsg
 
-    .IF eax == WM_LBUTTONDOWN       ; mouse button?
-      INVOKE MessageBox, hWnd, ADDR PopupText,
-             ADDR PopupTitle, MB_OK
+    .IF eax == WM_LBUTTONDOWN       ; 鼠标事件
       jmp    WinProcExit
-    .ELSEIF eax == WM_CREATE        ; create window?
-      INVOKE MessageBox, hWnd, ADDR AppLoadMsgText,
-             ADDR AppLoadMsgTitle, MB_OK
+    .ELSEIF eax == WM_CREATE        ; 创建窗口事件
       jmp    WinProcExit
-    .ELSEIF eax == WM_CLOSE         ; close window?
-      INVOKE MessageBox, hWnd, ADDR CloseMsg,
-             ADDR WindowName, MB_OK
+    .ELSEIF eax == WM_CLOSE         ; 关闭窗口事件
       INVOKE PostQuitMessage, 0
       jmp    WinProcExit
-    .ELSE                           ; other message?
+    .ELSE                           ; 其他事件
       INVOKE DefWindowProc, hWnd, localMsg, wParam, lParam
       jmp    WinProcExit
     .ENDIF
@@ -140,9 +146,13 @@ ErrorHandler PROC
 ; Display the appropriate system error message.
 ;---------------------------------------------------
 .data
-pErrorMsg   DWORD ?      ; ptr to error message
-messageID   DWORD ?
+
+pErrorMsg   dd ?      ; ptr to error message
+messageID   dd ?
+ErrorTitle  db "Error", 0
+
 .code
+
     INVOKE  GetLastError ; Returns message ID in EAX
     mov     messageID,eax
 
@@ -160,4 +170,8 @@ messageID   DWORD ?
     ret
 ErrorHandler ENDP
 
-END WinMain
+start:
+    INVOKE  WinMain
+    INVOKE  ExitProcess, NULL
+
+END start
