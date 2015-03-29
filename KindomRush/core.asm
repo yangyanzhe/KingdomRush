@@ -5,30 +5,31 @@ TITLE core.asm
 INCLUDE struct.inc
 INCLUDE Irvine32.inc
 INCLUDE core.inc
+INCLUDE data.inc
 .data
 
 MAP_WIDTH   =   700
 MAP_HEIGHT  =   600
 MAP_SIZE    =   MAP_WIDTH * MAP_HEIGHT
 UP          =   0
-DOWN        =   1
-LEFT        =   2
-RIGHT       =   3
+LEFT        =   1
+RIGHT       =   2
+DOWN        =   3
 MapFileName     db "data/map.data",0
 Game            GameInfo <>
 Game_Map        db MAP_SIZE dup(?)
 fileHandle      HANDLE ?
+DirectionX      dd 0, 1, 1, 0
+DirectionY      dd 1, 0, 0, 1
 
 .code
 ;==========================     Game      =============================
 ;----------------------------------------------------------------------     
-LoadGameInfo PROC USES ecx
+LoadGameInfo PROC USES ecx ebx esi edi eax edx,
 ;
 ;载入游戏信息
 ;----------------------------------------------------------------------
     INVOKE  LoadGameMap
-    mov     Game.Round_Num, 2
-    mov     Game.Round, 0
     mov     Game.State, 0
     mov     Game.Player_Life, 20
     mov     Game.Player_Money, 220
@@ -36,17 +37,57 @@ LoadGameInfo PROC USES ecx
     mov     Game.Start_Pos.y, 0
     mov     Game.End_Pos.x, 699
     mov     Game.End_Pos.y, 400
-    mov     Game.Tower_Num, 7
-    mov     ecx, 7
-    mov     ebx, OFFSET Game.TowerArray
-    mov     esi, 0
 
 ;初始化所有塔
+    mov     Game.Tower_Num, 2
+    mov     ecx, 2
+    mov     ebx, OFFSET Game.TowerArray
+    mov     esi, 0
+    mov     eax, OFFSET TOWERPOSITION
 Initialize_Tower_Loop:  
     mov     (Tower PTR [ebx]).Tower_Type, 0     ;塔的初始类型为0（空地）
-    mov     (Tower PTR [ebx]).Range, 100
+    mov     (Tower PTR [ebx]).Range, 100        ;塔的攻击范围
+    mov     edi, [eax]                          ;塔的位置：存在TOWERPOSITION数组中
+    mov     (Tower PTR [ebx]).Pos.x, edi
+    mov     edi, [eax+4] 
+    mov     (Tower PTR [ebx]).Pos.y, edi
+    add     eax, 8
     add     ebx, TYPE Tower
     loop    Initialize_Tower_Loop
+
+;初始化所有轮次信息
+    mov     eax, ROUND_NUMBER
+    mov     Game.Round_Num, eax
+    mov     Game.Round, 0
+    mov     ebx, OFFSET EACH_ROUND_ENEMY_NUMBER ;ebx指向每轮怪物数量数组
+    mov     edx, OFFSET EACH_ROUND_ENEMY_TYPE   ;edx指向每轮怪物类型数组
+    mov     esi, OFFSET Game.RoundArray         ;esi指向每局轮次数组  
+    mov     ecx, eax
+Initialize_Round_Loop:
+    mov     (Round PTR [esi]).Trigger_Tick, 0   ;设置每轮触发时间
+    mov     eax, [ebx]
+    mov     (Round PTR [esi]).EnemyNumber, eax  ;设置每轮怪物数量
+    mov     eax, esi
+    add     eax, 8
+    mov     edi, eax                            ;edi指向每轮怪物数组
+    push    ecx
+    mov     ecx, [ebx]
+    ;初始化每轮怪物
+    Initialize_Round_Enemy_Loop:
+        mov     eax, [edx]
+        mov     (Enemy PTR [edi]).Enemy_Type, eax
+        mov     eax, ENEMY_LIFE_0
+        mov     (Enemy PTR [edi]).Current_Life, eax
+        mov     eax, ENEMY_MONEY_0
+        mov     (Enemy PTR [edi]).Money, eax
+        add     edx, 4
+        add     edi, TYPE Enemy
+        loop    Initialize_Round_Enemy_Loop
+    pop     ecx
+    ;指针移动
+    add     esi, TYPE Round
+    add     ebx, TYPE DWORD
+    loop    Initialize_Round_Loop
 
     ret
 LoadGameInfo ENDP
@@ -117,7 +158,7 @@ SellTower PROC USES eax esi,
 ;----------------------------------------------------------------------
     mov     esi, pTower
     mov     eax, (Tower PTR [esi]).Sell_Cost
-    sub     Game.Player_Money, eax
+    add     Game.Player_Money, eax
     ret
 SellTower ENDP
 
@@ -212,15 +253,105 @@ ActivateEnemy PROC USES esi ecx ebx,
     mov     (Enemy PTR [esi]).End_Pos.y, ecx
     ;初始化怪物朝向：向下
     mov     ecx, DOWN
-    mov     (Enemy PTR [esi]).Current_Dirt, ecx
+    mov     (Enemy PTR [esi]).Current_Dir, ecx
     ret
 ActivateEnemy ENDP
 
 ;----------------------------------------------------------------------   
-EnemyMove PROC USES edi,
+EnemyMove PROC USES edi esi ebx eax,
+        pEnemy: PTR Enemy
+        LOCAL p_x: DWORD,  
+              p_y: DWORD,
+              e_x: DWORD,
+              e_y: DWORD,
+              choosed_dir: DWORD
 ;移动怪物
+;寻路算法： 选择（一），选择沿着原先的移动方向进行移动。若移动失败，则：
+;           选择（二），向与原先方向不同的两个方向移动。（如，原先往下走，则选择往左或右移动）
+;                       选择方式：依据当前点和终点相对位置。若失败，则：
+;           选择（三），选择与（二）相反的方向走。若失败, 则
+;           选择（四），选择与原先方向相反的方向移动。
 ;require: 特定怪物的指针
 ;----------------------------------------------------------------------
+    mov     edi, pEnemy
+    mov     ebx, OFFSET Game_Map
+    mov     ecx, (Enemy PTR [edi]).Current_Pos.x
+    cmp     ecx, 0
+    je      GETY_Done
+GETY:
+    add     ebx, (MAP_WIDTH)
+    loop    GETY
+GETY_Done:
+    mov     ecx, (Enemy PTR [edi]).Current_Pos.y
+    cmp     ecx, 0
+    je      STEP1
+GETX:
+    add     ebx, 1
+    loop    GETX
+STEP1:
+    ;check if current direction is movable
+    mov     ecx, (Enemy PTR [edi]).Current_Dir
+    INVOKE  CheckMovable, ebx, ecx
+    cmp     eax, 0
+    je      STEP2
+    mov     choosed_dir, ecx
+    jmp     EnemyMove_Exit
+STEP2:
+    mov     eax, (Enemy PTR [edi]).Current_Pos.x
+    mov     p_x, eax
+    mov     eax, (Enemy PTR [edi]).Current_Pos.y
+    mov     p_y, eax
+    mov     eax, Game.End_Pos.x
+    mov     e_x, eax
+    mov     eax, Game.End_Pos.y
+    mov     e_y, eax
+    .IF ecx == 0 || ecx == 3
+      mov     eax, e_x
+      mov     edx, p_x
+      .IF eax < edx
+        mov     choosed_dir, 1
+      .ELSE
+        mov     choosed_dir, 2
+      .ENDIF 
+    .ELSE
+      mov     eax, e_y
+      mov     edx, p_y
+      .IF eax < edx
+        mov     choosed_dir, 0
+      .ELSE
+        mov     choosed_dir, 3
+      .ENDIF
+    .ENDIF
+    mov edx, choosed_dir
+    INVOKE  CheckMovable, ebx, edx
+    cmp     eax, 0
+    je      STEP3
+    jmp     EnemyMove_Exit
+STEP3:
+    mov     eax, edx
+    mov     edx, 3
+    sub     edx, eax
+    mov     choosed_dir, edx
+    INVOKE  CheckMovable, ebx, edx
+    cmp     eax, 0
+    je      STEP4
+    jmp     EnemyMove_Exit
+STEP4:
+    mov     eax, ecx
+    mov     edx, 3
+    sub     edx, eax
+    mov     choosed_dir, edx
+EnemyMove_Exit:    
+    mov     eax, choosed_dir
+    .IF eax == 0
+      dec     (Enemy PTR [edi]).Current_Pos.y
+    .ELSEIF eax == 1
+      dec     (Enemy PTR [edi]).Current_Pos.x
+    .ELSEIF eax == 2
+      inc     (Enemy PTR [edi]).Current_Pos.y
+    .ELSE
+      inc     (Enemy PTR [edi]).Current_Pos.x
+    .ENDIF
     ret
 EnemyMove ENDP
 
@@ -319,5 +450,32 @@ LoadGameMap PROC USES eax ecx edx
     call    Crlf
     ret
 LoadGameMap ENDP
+
+;----------------------------------------------------------------------     
+CheckMovable PROC USES edi ebx ecx,
+    pPoint: DWORD,
+    Dir: DWORD
+;判断某点是否可以移动
+;require: 当前点坐标，想移动的方位
+;----------------------------------------------------------------------
+    mov     edi, pPoint   
+    mov     ebx, Dir
+    .IF ebx == 0
+      sub   edi, MAP_WIDTH
+    .ELSEIF ebx == 3
+      add   edi, MAP_WIDTH
+    .ELSEIF ebx == 1
+      sub   edi, 1
+    .ELSE
+      add   edi, 1
+    .ENDIF
+    mov ecx, [edi]
+    .IF ecx == 1
+      mov   eax, 1
+    .ELSE
+      mov   eax, 0
+    .ENDIF
+    ret
+CheckMovable ENDP
 
 END

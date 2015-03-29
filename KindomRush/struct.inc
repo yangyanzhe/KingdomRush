@@ -27,20 +27,19 @@ Tower ends
 
 ;¹ÖÎï
 Enemy struct 
-    Enemy_type			dd ?
+    Enemy_Type			dd ?
     Speed				dd ?
     Start_Pos			Coord <>
     End_Pos				Coord <>
     Current_Pos			Coord <>
-    Current_Dirt		dd ?
+    Current_Dir 		dd ?
     Current_Life		dd ?
-    Max_life			dd ?
     Money				dd ?
 Enemy ends
 
 ;ÂÖ´Î
 Round struct
-    Trigger_tick		dd ?
+    Trigger_Tick		dd ?
     EnemyNumber			dd ?
     EnemyArray			Enemy 50 dup(<>)
 Round ends
