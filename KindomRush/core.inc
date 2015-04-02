@@ -8,3 +8,26 @@ EnemyDie PROTO,
 CheckMovable PROTO,
     pPoint: DWORD,
     Dir: DWORD
+
+UpdateEnemies PROTO
+
+UpdateTowers PROTO
+
+GetRound PROTO,
+    _RoundNumber:DWORD
+
+GetRoundEnemy PROTO,
+    pRound: DWORD,
+    _EnemyNumber: DWORD
+
+ActivateEnemy PROTO,
+    pEnemy: DWORD
+
+EnemyMove PROTO,
+    pEnemy: DWORD
+
+EnemyCheckDie PROTO
+
+SearchAndAttack PROTO,
+    pTower: DWORD
+
