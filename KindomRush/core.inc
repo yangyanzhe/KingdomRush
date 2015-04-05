@@ -31,3 +31,9 @@ EnemyCheckDie PROTO
 SearchAndAttack PROTO,
     pTower: DWORD
 
+LoadGameInfo PROTO
+
+UpdateTimer PROTO
+
+TIMER_ID = 5
+TIMER_INTERVAL = 1000

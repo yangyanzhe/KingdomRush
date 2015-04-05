@@ -42,8 +42,8 @@ Enemy ends
 
 ;轮次
 Round struct
-    Enemy_Num			dd ?                    ;本轮怪物数量
     EnemyArray			Enemy 50 dup(<>)        ;本轮怪物序列
+    Enemy_Num			dd ?                    ;本轮怪物数量
     Now_Enemy           dd ?                    ;本轮当前即将出现的怪物编号
     Interval            dd ?                    ;两个怪物出现时间间隔
     Tick                dd ?                    ;本轮专用计时器

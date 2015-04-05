@@ -15,7 +15,7 @@ UP          =   0
 LEFT        =   1
 RIGHT       =   2
 DOWN        =   3
-MapFileName     db "data/map.data",0
+MapFileName     db "map.data",0
 Game_Map        db MAP_SIZE dup(?)
 fileHandle      HANDLE ?
 DirectionX      dd 0, 1, 1, 0
@@ -24,6 +24,14 @@ DirectionY      dd 1, 0, 0, 1
 .code
 ;==========================     Game      =============================
 ;----------------------------------------------------------------------     
+UpdateTimer PROC
+    inc     Game.Tick
+    mov     eax, Game.Tick
+    call    WriteDec
+    call    Crlf
+    ret
+UpdateTimer ENDP
+
 LoadGameInfo PROC USES ecx ebx esi edi eax edx
     LOCAL pEnemy_number: DWORD,
           pEnemy_type: DWORD,
@@ -80,7 +88,6 @@ Initialize_Round_Loop:
     mov     eax, [ebx]
     mov     (Round PTR [esi]).Enemy_Num, eax    ;设置每轮怪物数量
     mov     eax, esi
-    add     eax, 8
     mov     edi, eax                            ;edi指向每轮怪物数组
     push    ecx
     mov     ecx, [ebx]
@@ -593,7 +600,6 @@ GetRoundEnemy PROC USES ebx esi,
 ;return: eax: 怪物句柄
 ;----------------------------------------------------------------------
     mov ebx, pRound
-    add ebx, 8
     mov ecx, _EnemyNumber
     .IF ecx == 0
         jmp GetRoundEnemy_Exit
