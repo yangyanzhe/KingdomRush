@@ -20,5 +20,8 @@
 *.sdf
 *.opensdf
 *.aps
+
+*.vcxproj
+*.vcxproj.filters
 Debug
 Release

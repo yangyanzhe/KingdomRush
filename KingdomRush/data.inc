@@ -21,7 +21,7 @@ ENEMY_MONEY_0 = 10
 TOWERPOSITION dd 248, 312, 246, 365
 
 ; Ëþ×óÏÂ½Ç×ø±ê
-towerLocation Coord <200, 200>, <140, 180>, <220, 335>,
+towerLocation Coord <200, 200>, <140, 230>, <220, 335>,
 					<210, 380>, <300, 390>, <420, 390>, 
 					<340, 500>, <550, 480>
 locationNum = 8

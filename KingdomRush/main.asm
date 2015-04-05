@@ -28,19 +28,6 @@ hIcon           dd ?
 classname       db "Game Application", 0
 windowname      db "Kingdom Rush", 0
 
-IDI_ICON        EQU 101
-IDB_ARROW       EQU 103
-IDB_ARROW_SIGN	EQU 104
-IDB_CIRCLE		EQU 105
-IDB_MAGIC		EQU 106
-IDB_MAGIC_SIGN	EQU 107
-IDB_SODIER		EQU 109
-IDB_TURRET		EQU 111
-IDB_TURRET_SIGN	EQU 112
-IDB_SODIER_SIGN EQU 113
-IDB_MAPONE		EQU 115
-IDB_BLANK		EQU 116
-
 ;=================== CODE =========================
 TimerProc PROTO,
     hWnd: DWORD
@@ -255,6 +242,19 @@ InitiateImages PROC hInst:DWORD
 	INVOKE LoadBitmap, hInst, IDB_TURRET_SIGN
 	mov [esi+16], eax
 
+	mov esi, OFFSET monsterOneHandler
+	INVOKE LoadBitmap, hInst, IDB_MONSTER101
+	mov [esi], eax
+	INVOKE LoadBitmap, hInst, IDB_MONSTER102
+	mov [esi+4], eax
+	INVOKE LoadBitmap, hInst, IDB_MONSTER103
+	mov [esi+8], eax
+	INVOKE LoadBitmap, hInst, IDB_MONSTER104
+	mov [esi+12], eax
+	INVOKE LoadBitmap, hInst, IDB_MONSTER105
+	mov [esi+16], eax
+
+
 	pop esi
 	pop eax
 	ret
@@ -306,6 +306,7 @@ DrawBlank:
 	loop   DrawBlank
 	
 	; »­Ëþ
+
 
 	; »­±ø
 
