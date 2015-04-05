@@ -3,8 +3,8 @@ IFNDEF STRUCT_INC
 location struct
     x DWORD ?
     y DWORD ?
-    w DWORD ?
-    h DWORD ?
+    w DWORD 0
+    h DWORD 0
 location ends
 
 Coord struct
@@ -23,6 +23,7 @@ Tower struct
     Is_aoe				dd ?
     Aoe_range			dd ?
     Pos		            Coord <>
+    Location            location <>
 Tower ends
 
 ;π÷ŒÔ

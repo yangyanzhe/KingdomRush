@@ -61,13 +61,12 @@ WinMain PROC
     LOCAL   msg: MSG
     LOCAL   scrWidth: DWORD
     LOCAL   scrHeight: DWORD
-	LOCAL   dwStyle:DWORD
 
     ; 获取句柄
     INVOKE  GetModuleHandle, NULL
     mov     hInstance, eax
     mov     wndClass.hInstance, eax
-    ;INVOKE  RtlZeroMemory, ADDR wndClass, SIZEOF wndClass
+    INVOKE  RtlZeroMemory, ADDR wndClass, SIZEOF wndClass
 
     ; 加载程序的光标和图标
     INVOKE  LoadIcon, hInstance, IDI_ICON
@@ -91,24 +90,20 @@ WinMain PROC
 	mov     wndClass.lpszClassName, OFFSET classname
 
     ; 创建窗口（移至屏幕中央）
-    mov dwStyle, WS_OVERLAPPEDWINDOW
-	mov eax, WS_SIZEBOX
-	not eax
-	and dwStyle, eax
-	INVOKE GetSystemMetrics,SM_CXSCREEN
-	mov scrWidth, eax
-	INVOKE GetSystemMetrics,SM_CYSCREEN
-	mov scrHeight, eax
-	mov edx, 0
-	mov ebx, 2
-	mov eax, scrWidth
-	sub eax, window.w
-	div ebx
-	mov window.x, eax
-	mov eax, scrHeight
-	sub eax, window.h
-	div ebx
-	mov window.y, eax
+    INVOKE  GetSystemMetrics, SM_CXSCREEN
+	mov     scrWidth, eax
+	INVOKE  GetSystemMetrics, SM_CYSCREEN
+	mov     scrHeight, eax
+    mov     ebx, 2
+	mov     edx, 0
+	mov     eax, scrWidth
+	sub     eax, window.w
+	div     ebx
+	mov     window.x, eax
+	mov     eax, scrHeight
+	sub     eax, window.h
+	div     ebx
+	mov     window.y, eax
 
 	; 注册窗口类
 	INVOKE  RegisterClassEx, ADDR wndClass
@@ -208,7 +203,7 @@ WinProc ENDP
 
 TimerProc PROC,
     hWnd: DWORD
-     ;INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+    ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
     ret
 TimerProc ENDP
 
@@ -218,7 +213,6 @@ LMouseProc PROC,
 	cursorPosition: POINTS
 ;-----------------------------------------------------------------------
     ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
-
     ret
 LMouseProc ENDP
 
@@ -296,7 +290,7 @@ PaintProc PROC hWin:DWORD
 	INVOKE StretchBlt, memDC, client.x, client.y, client.w, client.h, imgDC, bgstart.x, bgstart.y, bgstart.w, bgstart.h, SRCCOPY
 
 	; 画空地
-	;mov	   esi, OFFSET towerHandler
+	;mov	esi, OFFSET towerHandler
 	;mov    ecx, 8
 	;INVOKE SelectObject, imgDC, [esi]
 	;mov    esi, OFFSET towerLocation
