@@ -29,7 +29,10 @@ IDI_ICON        EQU 101
 IDB_STARTBG     EQU 103
 
 ;=================== CODE =========================
-MouseProc PROTO,
+TimerProc PROTO,
+    hWnd: DWORD
+
+LMouseProc PROTO,
 	hWnd: DWORD,
 	cursorPosition: POINTS
 	
@@ -148,7 +151,10 @@ WinProc PROC,
 
     mov      eax, localMsg
 
-    .IF eax == WM_LBUTTONDOWN       ; 鼠标事件
+    .IF eax == WM_TIMER
+      INVOKE    TimerProc, hWnd
+      jmp    	WinProcExit
+    .ELSEIF eax == WM_LBUTTONDOWN       ; 鼠标事件
       mov  	    ebx, lParam
       mov  	    cursorPosition.x, bx
 	  shr  	    ebx, 16
@@ -162,6 +168,7 @@ WinProc PROC,
       jmp    	WinProcExit
     .ELSEIF eax == WM_CREATE        ; 创建窗口事件
       INVOKE 	SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
+      INVOKE    SetTimer, hWnd, 1, 1000, NULL
       jmp    	WinProcExit
     .ELSEIF eax == WM_PAINT         ; 绘图
       mov    	srcPosition.x, 0
@@ -180,15 +187,21 @@ WinProcExit:
     ret
 WinProc ENDP
 
+TimerProc PROC,
+    hWnd: DWORD
+    ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+    ret
+TimerProc ENDP
+
 ;-----------------------------------------------------------------------
-MouseProc PROC,
+LMouseProc PROC,
 	hWnd: DWORD,
 	cursorPosition: POINTS
 ;-----------------------------------------------------------------------
     ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
 
     ret
-MouseProc ENDP
+LMouseProc ENDP
 
 ;-----------------------------------------------------------------------
 PaintProc PROC,
