@@ -25,8 +25,19 @@ wndHeight       dd 600
 wndX            dd ?
 wndY            dd ?
 
-IDI_ICON        EQU 101
-IDB_STARTBG     EQU 103
+IDI_ICON            EQU     101
+IDB_ARROW           EQU     103
+IDB_ARROW_SIGN      EQU     104
+IDB_CIRCLE          EQU     105
+IDB_MAGIC           EQU     106
+IDB_MAGIC_SIGN      EQU     107
+IDB_SCORE           EQU     108
+IDB_SODIER          EQU     109
+IDB_TURRET          EQU     111
+IDB_TURRET_SIGN     EQU     112
+IDB_SODIER_SIGN     EQU     113
+IDB_MAPONE          EQU     115
+IDB_BLANK           EQU     116
 
 ;=================== CODE =========================
 TimerProc PROTO,
@@ -175,7 +186,7 @@ WinProc PROC,
       mov    	srcPosition.y, 0
       mov    	destPosition.x, 0
       mov    	destPosition.y, 0
-      INVOKE 	PaintProc, hWnd, IDB_STARTBG, srcPosition, destPosition
+      INVOKE 	PaintProc, hWnd, IDB_MAPONE, srcPosition, destPosition
       jmp    	WinProcExit
       ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
     .ELSE                           ; 其他事件

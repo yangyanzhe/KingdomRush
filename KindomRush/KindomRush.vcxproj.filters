@@ -35,6 +35,42 @@
     <None Include="resource\images\start\StartBG.bmp">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="resource\images\tower\arrow.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\arrow_sign.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\circle.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\magic.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\magic_sign.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\price.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\sodier.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\turret.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\turret_sign.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\sodier_sign.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\map\mapone.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="resource\images\tower\blank.bmp">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">

@@ -77,7 +77,19 @@
   <ItemGroup>
     <None Include="data.inc" />
     <None Include="resource\icons\ICON_256.ico" />
+    <None Include="resource\images\map\mapone.bmp" />
     <None Include="resource\images\start\StartBG.bmp" />
+    <None Include="resource\images\tower\arrow.bmp" />
+    <None Include="resource\images\tower\arrow_sign.bmp" />
+    <None Include="resource\images\tower\blank.bmp" />
+    <None Include="resource\images\tower\circle.bmp" />
+    <None Include="resource\images\tower\magic.bmp" />
+    <None Include="resource\images\tower\magic_sign.bmp" />
+    <None Include="resource\images\tower\price.bmp" />
+    <None Include="resource\images\tower\sodier.bmp" />
+    <None Include="resource\images\tower\sodier_sign.bmp" />
+    <None Include="resource\images\tower\turret.bmp" />
+    <None Include="resource\images\tower\turret_sign.bmp" />
     <None Include="struct.inc" />
   </ItemGroup>
   <ItemGroup>
