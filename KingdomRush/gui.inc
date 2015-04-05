@@ -6,7 +6,13 @@ INCLUDE data.inc
 ; º¯ÊýÉùÃ÷
 InitiateImages	PROTO :DWORD
 
+DrawMonster PROTO,
+	mPos:Coord,			; position on window
+	mType:DWORD,		; monster type
+	mStep:DWORD			; monster step
+
 towerNum  =	 5
+monsterOneNum = 5
 IDI_ICON 		EQU 101
 IDB_ARROW 		EQU 103
 IDB_ARROW_SIGN	EQU 104
@@ -33,7 +39,7 @@ map1	dd ?					; map handler
 
 towerHandler dd towerNum DUP(?) 
 
-monsterOneHandler dd 5 DUP(?)
+monsterOneHandler dd monsterOneNum DUP(?)
 
 towerSignHandler dd towerNum DUP(?) 
 

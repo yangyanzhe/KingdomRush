@@ -33,4 +33,7 @@ magicSize	Coord <80, 70>
 blankSize	Coord <70, 50>
 signSize	Coord <46, 64>
 
+testPos		Coord <300, 10>
+
+
 ENDIF

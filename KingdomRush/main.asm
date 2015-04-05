@@ -307,10 +307,11 @@ DrawBlank:
 	
 	; »­Ëþ
 
-
 	; »­±ø
 
 	; »­Ð¡¹Ö
+	INVOKE DrawMonster, testPos, 1, 0
+
 
 	; »­×Óµ¯
 
@@ -325,6 +326,37 @@ DrawBlank:
 
 	ret
 PaintProc ENDP
+
+;---------------------------------------------------------
+DrawMonster PROC uses esi eax ebx,
+	mPos:Coord,
+	mType:DWORD,		; monster type
+	mStep:DWORD			; monster step
+;
+; LoadImage of game. If more levels are designed, considering
+; input the level number.
+; Receives: handler
+; Returns:  nothing
+;---------------------------------------------------------
+	LOCAL   mWidth:DWORD
+	LOCAL   mHeight:DWORD
+
+	.IF	mType == 1
+		mov		mWidth, 35
+		mov		mHeight, 30
+		mov		esi, OFFSET monsterOneHandler
+		mov		eax, mStep
+		mov		ebx, 4
+		mul		ebx
+		add		esi, eax 
+
+		INVOKE	SelectObject, imgDC, [esi]
+		INVOKE	TransparentBlt, memDC, mPos.x, mPos.y, mWidth, mHeight, imgDC, 0 , 0, mWidth, mHeight, tcolor
+		
+	.ENDIF
+	ret
+DrawMonster ENDP
+
 
 ;---------------------------------------------------
 ErrorHandler PROC
