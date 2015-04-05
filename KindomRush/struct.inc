@@ -35,23 +35,31 @@ Enemy struct
     Current_Dir 		dd ?
     Current_Life		dd ?
     Money				dd ?
+
+    Cur_img             dd ?
+    Tot_img             dd ?
 Enemy ends
 
 ;轮次
 Round struct
-    Trigger_Tick		dd ?
-    EnemyNumber			dd ?
-    EnemyArray			Enemy 50 dup(<>)
+    Enemy_Num			dd ?                    ;本轮怪物数量
+    EnemyArray			Enemy 50 dup(<>)        ;本轮怪物序列
+    Now_Enemy           dd ?                    ;本轮当前即将出现的怪物编号
+    Interval            dd ?                    ;两个怪物出现时间间隔
+    Tick                dd ?                    ;本轮专用计时器
+    Trigger_Tick		dd ?                    ;本轮触发时间
 Round ends
 
 ;游戏信息
 GameInfo struct
+    Tick                dd ?                    ;游戏计时器
     State				dd ?
     Player_Life			dd ?
     Player_Money		dd ?
     Start_Pos           Coord <>
     End_Pos             Coord <>
-    Round				dd ?                    ;当前Round编号
+    Now_Round	        dd ?                    ;当前Round编号
+    Next_Round          dd ?                    ;下一轮Round编号
     Round_Num			dd ?                    ;总轮次数
     Cur_Tick			dd ?
     Tower_Num           dd ?
