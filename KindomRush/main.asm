@@ -1,16 +1,23 @@
 TITLE Windows Application                   (WinApp.asm)
 
-    .386      
-    .model flat,stdcall      
-    option casemap:none
+.386      
+.model flat,stdcall      
+option casemap:none
 
 INCLUDE     windows.inc
 INCLUDE     gdi32.inc
-INCLUDELIB  gdi32.lib
-INCLUDE     kernel32.inc
-INCLUDELIB  kernel32.lib
 INCLUDE     user32.inc
+INCLUDE		msimg32.inc
+INCLUDE     kernel32.inc
+
+INCLUDELIB  gdi32.lib
+INCLUDELIB  kernel32.lib
 INCLUDELIB  user32.lib
+INCLUDELIB  msimg32.lib
+
+INCLUDE     gui.inc
+
+white  = 1111b
 
 ;==================== DATA =======================
 .data
@@ -20,24 +27,19 @@ hMainWnd        dd ?
 hIcon           dd ?
 classname       db "Game Application", 0
 windowname      db "Kingdom Rush", 0
-wndWidth        dd 700
-wndHeight       dd 600
-wndX            dd ?
-wndY            dd ?
 
-IDI_ICON            EQU     101
-IDB_ARROW           EQU     103
-IDB_ARROW_SIGN      EQU     104
-IDB_CIRCLE          EQU     105
-IDB_MAGIC           EQU     106
-IDB_MAGIC_SIGN      EQU     107
-IDB_SCORE           EQU     108
-IDB_SODIER          EQU     109
-IDB_TURRET          EQU     111
-IDB_TURRET_SIGN     EQU     112
-IDB_SODIER_SIGN     EQU     113
-IDB_MAPONE          EQU     115
-IDB_BLANK           EQU     116
+IDI_ICON        EQU 101
+IDB_ARROW       EQU 103
+IDB_ARROW_SIGN	EQU 104
+IDB_CIRCLE		EQU 105
+IDB_MAGIC		EQU 106
+IDB_MAGIC_SIGN	EQU 107
+IDB_SODIER		EQU 109
+IDB_TURRET		EQU 111
+IDB_TURRET_SIGN	EQU 112
+IDB_SODIER_SIGN EQU 113
+IDB_MAPONE		EQU 115
+IDB_BLANK		EQU 116
 
 ;=================== CODE =========================
 TimerProc PROTO,
@@ -48,101 +50,108 @@ LMouseProc PROTO,
 	cursorPosition: POINTS
 	
 PaintProc PROTO,
-    hWnd: DWORD,
-	resourceID: DWORD,
-	srcPosition: POINTS,
-	destPosition: POINTS
+    hWnd: DWORD
 
 .code
 
 ;-----------------------------------------------------
 WinMain PROC
 ;-----------------------------------------------------
-    LOCAL   lWndClass: WNDCLASSEX
-    LOCAL   lMsg: MSG
-    LOCAL   lScreenWidth: DWORD
-    LOCAL   lScreenHeight: DWORD
+    LOCAL   wndClass: WNDCLASSEX
+    LOCAL   msg: MSG
+    LOCAL   scrWidth: DWORD
+    LOCAL   scrHeight: DWORD
+	LOCAL   dwStyle:DWORD
 
     ; 获取句柄
     INVOKE  GetModuleHandle, NULL
     mov     hInstance, eax
-    mov     lWndClass.hInstance, eax
-    INVOKE  RtlZeroMemory, ADDR lWndClass, SIZEOF lWndClass
+    mov     wndClass.hInstance, eax
+    ;INVOKE  RtlZeroMemory, ADDR wndClass, SIZEOF wndClass
 
-    ; 注册窗口
+    ; 加载程序的光标和图标
     INVOKE  LoadIcon, hInstance, IDI_ICON
     mov     hIcon, eax
-    mov     lWndClass.hIcon, eax
-    mov     lWndClass.hIconSm, eax
+    mov     wndClass.hIcon, eax
+    mov     wndClass.hIconSm, eax
     INVOKE  LoadCursor, hInstance, IDC_ARROW
-    mov     lWndClass.hCursor, eax
+    mov     wndClass.hCursor, eax
 
-    mov     lWndClass.cbSize, SIZEOF WNDCLASSEX
-    mov     lWndClass.hbrBackground, COLOR_WINDOW + 1
-    mov     lWndClass.lpfnWndProc, OFFSET WinProc
-    mov     lWndClass.lpszClassName, OFFSET classname
-    mov     lWndClass.style, CS_HREDRAW or CS_VREDRAW
+	; 初始化窗口
+    mov     wndClass.cbSize, SIZEOF WNDCLASSEX
+    mov     wndClass.style, CS_HREDRAW or CS_VREDRAW or CS_BYTEALIGNWINDOW
+	mov     wndClass.lpfnWndProc, OFFSET WinProc
+	mov		wndClass.cbClsExtra,0      
+    mov		wndClass.cbWndExtra,0  
 
-    INVOKE  RegisterClassEx, ADDR lWndClass
+	; 创建画刷
+	INVOKE	CreateSolidBrush, white
+	mov		bgBrush, eax
+    mov		wndClass.hbrBackground, eax 
+	mov     wndClass.lpszClassName, OFFSET classname
+
+    ; 创建窗口（移至屏幕中央）
+    mov dwStyle, WS_OVERLAPPEDWINDOW
+	mov eax, WS_SIZEBOX
+	not eax
+	and dwStyle, eax
+	INVOKE GetSystemMetrics,SM_CXSCREEN
+	mov scrWidth, eax
+	INVOKE GetSystemMetrics,SM_CYSCREEN
+	mov scrHeight, eax
+	mov edx, 0
+	mov ebx, 2
+	mov eax, scrWidth
+	sub eax, window.w
+	div ebx
+	mov window.x, eax
+	mov eax, scrHeight
+	sub eax, window.h
+	div ebx
+	mov window.y, eax
+
+	; 注册窗口类
+	INVOKE  RegisterClassEx, ADDR wndClass
     .IF eax == 0
       call  ErrorHandler
       jmp   Exit_Program
     .ENDIF
-
-    ; 创建窗口（移至屏幕中央）
-    INVOKE  GetSystemMetrics, SM_CXSCREEN
-	mov     lScreenWidth, eax
-	INVOKE  GetSystemMetrics, SM_CYSCREEN
-	mov     lScreenHeight, eax
-    mov     ebx, 2
-	mov     edx, 0
-	mov     eax, lScreenWidth
-	sub     eax, wndWidth
-	div     ebx
-	mov     wndX, eax
-	mov     eax, lScreenHeight
-	sub     eax, wndHeight
-	div     ebx
-	mov     wndY, eax
 
     INVOKE  CreateWindowEx, 
             0, 
             OFFSET classname,
             OFFSET windowname, 
             WS_OVERLAPPED or WS_SYSMENU or WS_MINIMIZEBOX ,
-            wndX, 
-            wndY, 
-            wndWidth,
-            wndHeight, 
+            window.x, 
+            window.y, 
+            window.w,
+            window.h, 
             NULL, 
             NULL, 
             hInstance, 
             NULL
+	
+	; 保存窗口句柄
     mov     hMainWnd,eax
 
-    .IF eax == 0
-      call  ErrorHandler
-      jmp   Exit_Program
-    .ENDIF
+	; 加载图片
+	INVOKE  InitiateImages, hInstance 
 
     ; 绘制窗口
     INVOKE  ShowWindow, hMainWnd, SW_SHOW
     INVOKE  UpdateWindow, hMainWnd
 
-	; 创建内存DC
-	
-	
     ; 消息循环
 Message_Loop:
-    INVOKE  GetMessage, ADDR lMsg, NULL, NULL, NULL
+    INVOKE  GetMessage, ADDR msg, NULL, NULL, NULL
 
     ; 退出WM_QUIT
     .IF eax == 0
       jmp   Exit_Program
     .ENDIF
 
-    INVOKE  TranslateMessage, ADDR lMsg
-    INVOKE  DispatchMessage, ADDR lMsg
+    INVOKE  TranslateMessage, ADDR msg
+    INVOKE  DispatchMessage, ADDR msg
     jmp     Message_Loop
 
 Exit_Program:
@@ -159,7 +168,8 @@ WinProc PROC,
     LOCAL   srcPosition: POINTS
     LOCAL   destPosition: POINTS
     LOCAL   cursorPosition: POINTS
-
+	LOCAL	ps:PAINTSTRUCT
+   
     mov      eax, localMsg
 
     .IF eax == WM_TIMER
@@ -182,13 +192,11 @@ WinProc PROC,
       INVOKE    SetTimer, hWnd, 1, 1000, NULL
       jmp    	WinProcExit
     .ELSEIF eax == WM_PAINT         ; 绘图
-      mov    	srcPosition.x, 0
-      mov    	srcPosition.y, 0
-      mov    	destPosition.x, 0
-      mov    	destPosition.y, 0
-      INVOKE 	PaintProc, hWnd, IDB_MAPONE, srcPosition, destPosition
-      jmp    	WinProcExit
-      ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+	  INVOKE BeginPaint, hWnd, ADDR ps
+	  mov hDC, eax
+	  INVOKE PaintProc, hWnd
+	  INVOKE EndPaint, hWnd, ADDR ps
+	  jmp WinProcExit
     .ELSE                           ; 其他事件
       INVOKE 	DefWindowProc, hWnd, localMsg, wParam, lParam
       jmp    	WinProcExit
@@ -200,7 +208,7 @@ WinProc ENDP
 
 TimerProc PROC,
     hWnd: DWORD
-    ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+     ;INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
     ret
 TimerProc ENDP
 
@@ -214,53 +222,108 @@ LMouseProc PROC,
     ret
 LMouseProc ENDP
 
+
+;---------------------------------------------------------
+InitiateImages PROC hInst:DWORD
+;
+; LoadImage of game. If more levels are designed, considering
+; input the level number.
+; Receives: handler
+; Returns:  nothing
+;---------------------------------------------------------
+	push eax
+	push esi
+
+	INVOKE LoadBitmap, hInst, IDB_MAPONE
+	mov map1, eax
+
+	mov esi, OFFSET towerHandler
+	INVOKE LoadBitmap, hInst, IDB_BLANK
+	mov [esi], eax
+	INVOKE LoadBitmap, hInst, IDB_ARROW
+	mov [esi+4], eax
+	INVOKE LoadBitmap, hInst, IDB_MAGIC
+	mov [esi+8], eax
+	INVOKE LoadBitmap, hInst, IDB_SODIER
+	mov [esi+12], eax
+	INVOKE LoadBitmap, hInst, IDB_TURRET
+	mov [esi+16], eax
+
+	mov esi, OFFSET towerSignHandler
+	INVOKE LoadBitmap, hInst, IDB_CIRCLE
+	mov [esi], eax
+	INVOKE LoadBitmap, hInst, IDB_ARROW_SIGN
+	mov [esi+4], eax
+	INVOKE LoadBitmap, hInst, IDB_MAGIC_SIGN
+	mov [esi+8], eax
+	INVOKE LoadBitmap, hInst, IDB_SODIER_SIGN
+	mov [esi+12], eax
+	INVOKE LoadBitmap, hInst, IDB_TURRET_SIGN
+	mov [esi+16], eax
+
+	pop esi
+	pop eax
+	ret
+InitiateImages ENDP
+
 ;-----------------------------------------------------------------------
-PaintProc PROC,
-    hWnd: DWORD,
-	resourceID: DWORD,
-	srcPosition: POINTS,
-	destPosition: POINTS
+PaintProc PROC hWin:DWORD
+;
+; Painting  Function
+; Receives: Windows handler
+; Returns:  nothing
 ;-----------------------------------------------------------------------
-	LOCAL 	ps: PAINTSTRUCT
-	LOCAL 	srcDC: DWORD
-	LOCAL 	memDC: DWORD
-	LOCAL 	imgDC: DWORD
-	LOCAL 	originBitmap: DWORD
-	LOCAL 	memBitmap: DWORD
-	LOCAL 	bm: BITMAP
+	LOCAL hOld: DWORD
+	push eax
+	push ebx
+	push esi
+
+	INVOKE CreateCompatibleBitmap, hDC, client.w, client.h
+	mov hBitmap, eax
+    INVOKE CreateCompatibleDC, hDC
+    mov memDC, eax
+	INVOKE CreateCompatibleDC, hDC
+    mov imgDC, eax
+
+    INVOKE SelectObject, memDC, hBitmap
+    mov hOld, eax
 	
-	INVOKE	BeginPaint, hWnd, ADDR ps
-	mov 	srcDC, eax
-	INVOKE 	CreateCompatibleDC, srcDC
-	mov 	memDC, eax
-	INVOKE 	CreateCompatibleDC, srcDC
-	mov 	imgDC, eax
+	INVOKE FillRect, memDC, ADDR rect, bgBrush
+	INVOKE SelectObject,hDC,hOld
+
+	; 画地图
+	INVOKE SelectObject, imgDC, map1
+	INVOKE StretchBlt, memDC, client.x, client.y, client.w, client.h, imgDC, bgstart.x, bgstart.y, bgstart.w, bgstart.h, SRCCOPY
+
+	; 画空地
+	;mov	   esi, OFFSET towerHandler
+	;mov    ecx, 8
+	;INVOKE SelectObject, imgDC, [esi]
+	;mov    esi, OFFSET towerLocation
+;DrawBlank:
+	;mov    
+	;INVOKE StretchBlt, memDC, , imgDC, 0 , 0, blankSize.x, blankSize.y
+	;loop   DrawBlank
 	
-	INVOKE 	CreateCompatibleBitmap, srcDC, wndWidth, wndHeight
-	mov 	memBitmap, eax
-	INVOKE 	SelectObject, memDC, memBitmap
-	INVOKE 	LoadBitmap, hInstance, resourceID
-	mov 	originBitmap, eax
-	INVOKE 	SelectObject, imgDC, originBitmap
 	
-	INVOKE 	GetObject, originBitmap, SIZEOF BITMAP, ADDR bm
-	INVOKE 	StretchBlt, 
-			memDC, destPosition.x, destPosition.y, bm.bmWidth, bm.bmHeight,
-			imgDC, srcPosition.x, srcPosition.y, bm.bmWidth, bm.bmHeight,
-			SRCCOPY
-    INVOKE  StretchBlt, 
-			srcDC, destPosition.x, destPosition.y, bm.bmWidth, bm.bmHeight,
-			memDC, srcPosition.x, srcPosition.y, bm.bmWidth, bm.bmHeight,
-			SRCCOPY
-	
-	INVOKE 	DeleteObject, memBitmap
-	INVOKE 	DeleteDC, memDC
-	INVOKE	DeleteObject, originBitmap
-	INVOKE 	DeleteDC, imgDC
-	INVOKE 	ReleaseDC, hWnd, srcDC
-	
-	INVOKE 	EndPaint, hWnd, ADDR ps
-    ret
+	; 画塔
+
+	; 画兵
+
+	; 画小怪
+
+	; 画子弹
+
+	INVOKE BitBlt, hDC, 0, 0, window.w, window.h, memDC, 0, 0, SRCCOPY 
+    INVOKE DeleteDC,memDC
+	INVOKE DeleteDC,imgDC
+	INVOKE DeleteObject, hBitmap
+
+	pop esi
+	pop ebx
+	pop eax
+
+	ret
 PaintProc ENDP
 
 ;---------------------------------------------------
