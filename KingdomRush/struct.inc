@@ -1,4 +1,5 @@
 IFNDEF STRUCT_INC
+STRUCT_INC  equ <0>
 
 location struct
     x DWORD ?
@@ -23,7 +24,6 @@ Tower struct
     Is_aoe				dd ?
     Aoe_range			dd ?
     Pos		            Coord <>
-    Location            location <>
 Tower ends
 
 ;怪物
@@ -69,5 +69,11 @@ GameInfo struct
     pEnemyArray			dd 100 dup(?)		    ;当前所有怪物的指针
     RoundArray			Round 20 dup(<>)		;游戏所有轮次
 GameInfo ends
+
+BitmapInfo struct
+    bWidth              dd ?
+    bHeight             dd ?
+    bHandler            dd ?
+BitmapInfo ends
 
 ENDIF

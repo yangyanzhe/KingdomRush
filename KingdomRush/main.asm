@@ -15,6 +15,9 @@ INCLUDELIB  kernel32.lib
 INCLUDELIB  user32.lib
 INCLUDELIB  msimg32.lib
 
+INCLUDE     struct.inc
+INCLUDE     data.inc
+INCLUDE     core.inc
 INCLUDE     gui.inc
 
 white  = 1111b
@@ -29,19 +32,27 @@ classname       db "Game Application", 0
 windowname      db "Kingdom Rush", 0
 
 IDI_ICON        EQU 101
-IDB_ARROW       EQU 103
-IDB_ARROW_SIGN	EQU 104
-IDB_CIRCLE		EQU 105
-IDB_MAGIC		EQU 106
-IDB_MAGIC_SIGN	EQU 107
-IDB_SODIER		EQU 109
-IDB_TURRET		EQU 111
-IDB_TURRET_SIGN	EQU 112
+IDB_MAP         EQU 102
+IDB_MAPONE      EQU 102
+
+IDB_SIGN        EQU 110
+IDB_CIRCLE		EQU 110
+IDB_ARROW_SIGN	EQU 111
+IDB_MAGIC_SIGN	EQU 112
 IDB_SODIER_SIGN EQU 113
-IDB_MAPONE		EQU 115
-IDB_BLANK		EQU 116
+IDB_TURRET_SIGN	EQU 114
+
+IDB_TOWER       EQU 115
+IDB_BLANK		EQU 115
+IDB_ARROW       EQU 116
+IDB_MAGIC		EQU 117
+IDB_SODIER		EQU 118
+IDB_TURRET		EQU 119
 
 ;=================== CODE =========================
+InitImages PROTO,
+    hInst:DWORD
+
 TimerProc PROTO,
     hWnd: DWORD
 
@@ -78,16 +89,17 @@ WinMain PROC
 
 	; 初始化窗口
     mov     wndClass.cbSize, SIZEOF WNDCLASSEX
-    mov     wndClass.style, CS_HREDRAW or CS_VREDRAW or CS_BYTEALIGNWINDOW
-	mov     wndClass.lpfnWndProc, OFFSET WinProc
-	mov		wndClass.cbClsExtra,0      
-    mov		wndClass.cbWndExtra,0  
+    mov     wndClass.hbrBackground, COLOR_WINDOW + 1
+    mov     wndClass.lpfnWndProc, OFFSET WinProc
+    mov     wndClass.lpszClassName, OFFSET classname
+    mov     wndClass.style, CS_HREDRAW or CS_VREDRAW
 
-	; 创建画刷
-	INVOKE	CreateSolidBrush, white
-	mov		bgBrush, eax
-    mov		wndClass.hbrBackground, eax 
-	mov     wndClass.lpszClassName, OFFSET classname
+    ; 注册窗口类
+	INVOKE  RegisterClassEx, ADDR wndClass
+    .IF eax == 0
+      call  ErrorHandler
+      jmp   Exit_Program
+    .ENDIF
 
     ; 创建窗口（移至屏幕中央）
     INVOKE  GetSystemMetrics, SM_CXSCREEN
@@ -105,13 +117,6 @@ WinMain PROC
 	div     ebx
 	mov     window.y, eax
 
-	; 注册窗口类
-	INVOKE  RegisterClassEx, ADDR wndClass
-    .IF eax == 0
-      call  ErrorHandler
-      jmp   Exit_Program
-    .ENDIF
-
     INVOKE  CreateWindowEx, 
             0, 
             OFFSET classname,
@@ -125,12 +130,15 @@ WinMain PROC
             NULL, 
             hInstance, 
             NULL
-	
-	; 保存窗口句柄
     mov     hMainWnd,eax
 
+    .IF eax == 0
+      call  ErrorHandler
+      jmp   Exit_Program
+    .ENDIF
+
 	; 加载图片
-	INVOKE  InitiateImages, hInstance 
+	INVOKE  InitImages, hInstance 
 
     ; 绘制窗口
     INVOKE  ShowWindow, hMainWnd, SW_SHOW
@@ -163,8 +171,8 @@ WinProc PROC,
     LOCAL   srcPosition: POINTS
     LOCAL   destPosition: POINTS
     LOCAL   cursorPosition: POINTS
-	LOCAL	ps:PAINTSTRUCT
-   
+	LOCAL	ps: PAINTSTRUCT
+
     mov      eax, localMsg
 
     .IF eax == WM_TIMER
@@ -184,14 +192,15 @@ WinProc PROC,
       jmp    	WinProcExit
     .ELSEIF eax == WM_CREATE        ; 创建窗口事件
       INVOKE 	SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
+      INVOKE    LoadGameInfo
       INVOKE    SetTimer, hWnd, 1, 1000, NULL
       jmp    	WinProcExit
     .ELSEIF eax == WM_PAINT         ; 绘图
-	  INVOKE BeginPaint, hWnd, ADDR ps
-	  mov hDC, eax
-	  INVOKE PaintProc, hWnd
-	  INVOKE EndPaint, hWnd, ADDR ps
-	  jmp WinProcExit
+	  INVOKE    BeginPaint, hWnd, ADDR ps
+	  mov       hDC, eax
+	  INVOKE    PaintProc, hWnd
+	  INVOKE    EndPaint, hWnd, ADDR ps
+	  jmp       WinProcExit
     .ELSE                           ; 其他事件
       INVOKE 	DefWindowProc, hWnd, localMsg, wParam, lParam
       jmp    	WinProcExit
@@ -218,47 +227,94 @@ LMouseProc ENDP
 
 
 ;---------------------------------------------------------
-InitiateImages PROC hInst:DWORD
+InitImages PROC,
+    hInst:DWORD
 ;
 ; LoadImage of game. If more levels are designed, considering
 ; input the level number.
 ; Receives: handler
 ; Returns:  nothing
 ;---------------------------------------------------------
-	push eax
-	push esi
+    LOCAL   bm: BITMAP
 
-	INVOKE LoadBitmap, hInst, IDB_MAPONE
-	mov map1, eax
+    mov     ecx, mapNum
+    mov     ebx, OFFSET mapHandler
+    mov     edx, IDB_MAP
+LoadMap:
+    push    ecx
+	INVOKE  LoadBitmap, hInst, edx
+    mov     (BitmapInfo PTR [ebx]).bHandler, eax
+    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
+    mov     eax, bm.bmWidth
+    mov     (BitmapInfo PTR [ebx]).bWidth, eax
+    mov     eax, bm.bmHeight
+    mov     (BitmapInfo PTR [ebx]).bHeight, eax
+    add     ebx, TYPE mapHandler
+    add     edx, 1
+    pop     ecx
+    loop    LoadMap
 
-	mov esi, OFFSET towerHandler
-	INVOKE LoadBitmap, hInst, IDB_BLANK
-	mov [esi], eax
-	INVOKE LoadBitmap, hInst, IDB_ARROW
-	mov [esi+4], eax
-	INVOKE LoadBitmap, hInst, IDB_MAGIC
-	mov [esi+8], eax
-	INVOKE LoadBitmap, hInst, IDB_SODIER
-	mov [esi+12], eax
-	INVOKE LoadBitmap, hInst, IDB_TURRET
-	mov [esi+16], eax
+    mov     ecx, towerNum
+    mov     ebx, OFFSET towerHandler
+    mov     edx, IDB_TOWER
+LoadTower:
+    push    ecx
+    INVOKE  LoadBitmap, hInst, edx
+    mov     (BitmapInfo PTR [ebx]).bHandler, eax
+    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
+    mov     eax, bm.bmWidth
+    mov     (BitmapInfo PTR [ebx]).bWidth, eax
+    mov     eax, bm.bmHeight
+    mov     (BitmapInfo PTR [ebx]).bHeight, eax
+    add     ebx, TYPE towerHandler
+    add     edx, 1
+    pop     ecx
+    loop    LoadTower
 
-	mov esi, OFFSET towerSignHandler
-	INVOKE LoadBitmap, hInst, IDB_CIRCLE
-	mov [esi], eax
-	INVOKE LoadBitmap, hInst, IDB_ARROW_SIGN
-	mov [esi+4], eax
-	INVOKE LoadBitmap, hInst, IDB_MAGIC_SIGN
-	mov [esi+8], eax
-	INVOKE LoadBitmap, hInst, IDB_SODIER_SIGN
-	mov [esi+12], eax
-	INVOKE LoadBitmap, hInst, IDB_TURRET_SIGN
-	mov [esi+16], eax
+    mov     ecx, signNum
+    mov     ebx, OFFSET signHandler
+    mov     edx, IDB_SIGN
+LoadSign:
+    push    ecx
+    INVOKE  LoadBitmap, hInst, edx
+    mov     (BitmapInfo PTR [ebx]).bHandler, eax
+    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
+    mov     eax, bm.bmWidth
+    mov     (BitmapInfo PTR [ebx]).bWidth, eax
+    mov     eax, bm.bmHeight
+    mov     (BitmapInfo PTR [ebx]).bHeight, eax
+    add     ebx, TYPE signHandler
+    add     edx, 1
+    pop     ecx
+    loop    LoadSign
 
-	pop esi
-	pop eax
 	ret
-InitiateImages ENDP
+InitImages ENDP
+
+;-----------------------------------------------------------------------
+PaintTowers PROC
+;-----------------------------------------------------------------------
+    LOCAL 	bm: BITMAP
+
+    ; 画出所有空地
+	INVOKE  SelectObject, imgDC, towerHandler[0].bHandler
+    
+    mov     ecx, Game.Tower_Num
+    mov     ebx, OFFSET Game.TowerArray
+DrawBlank:
+	push    ecx
+	INVOKE  TransparentBlt, 
+            memDC, (Tower PTR [ebx]).Pos.x, (Tower PTR [ebx]).Pos.y,
+            towerHandler[0].bWidth, towerHandler[0].bHeight,
+            imgDC, 0, 0, 
+            towerHandler[0].bWidth, towerHandler[0].bHeight,
+            tcolor
+	add     ebx, TYPE Tower
+	pop     ecx
+	loop    DrawBlank
+
+    ret
+PaintTowers ENDP
 
 ;-----------------------------------------------------------------------
 PaintProc PROC hWin:DWORD
@@ -268,6 +324,7 @@ PaintProc PROC hWin:DWORD
 ; Returns:  nothing
 ;-----------------------------------------------------------------------
 	LOCAL hOld: DWORD
+
 	push eax
 	push ebx
 	push esi
@@ -281,31 +338,14 @@ PaintProc PROC hWin:DWORD
 
     INVOKE SelectObject, memDC, hBitmap
     mov hOld, eax
-	
-	INVOKE FillRect, memDC, ADDR rect, bgBrush
-	INVOKE SelectObject,hDC,hOld
 
 	; 画地图
-	INVOKE SelectObject, imgDC, map1
+	INVOKE SelectObject, imgDC, mapHandler[0].bHandler
 	INVOKE StretchBlt, memDC, client.x, client.y, client.w, client.h, imgDC, bgstart.x, bgstart.y, bgstart.w, bgstart.h, SRCCOPY
 
 	; 画空地
-	mov	   esi, OFFSET towerHandler
-	
-	INVOKE SelectObject, imgDC, [esi]
-	mov    esi, OFFSET towerLocation
-	mov    ecx, locationNum
-DrawBlank:
-	push   ecx
-	mov    eax, (Coord PTR [esi]).x
-	mov	   ebx, (Coord PTR [esi]).y
-	sub	   ebx, blankSize.y
-	INVOKE TransparentBlt, memDC, eax, ebx, blankSize.x, blankSize.y, imgDC, 0 , 0, blankSize.x, blankSize.y, tcolor
-	add    esi, sizeof Coord
-	pop    ecx
-	loop   DrawBlank
-	
 	; 画塔
+    INVOKE  PaintTowers
 
 	; 画兵
 

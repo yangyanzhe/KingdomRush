@@ -74,6 +74,9 @@
     <None Include="gui.inc">
       <Filter>头文件</Filter>
     </None>
+    <None Include="core.inc">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">

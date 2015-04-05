@@ -76,6 +76,7 @@
     <MASM Include="main.asm" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="core.inc" />
     <None Include="data.inc" />
     <None Include="gui.inc" />
     <None Include="resource\icons\ICON_256.ico" />

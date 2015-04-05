@@ -1,26 +1,24 @@
 IFNDEF GUI_INC
+GUI_INC     equ <2>
 
-INCLUDE struct.inc
-INCLUDE data.inc
+INCLUDE     struct.inc
+INCLUDE     data.inc
 
-; º¯ÊýÉùÃ÷
-InitiateImages	PROTO :DWORD
-
-towerNum  =	 5
 .data
-tcolor	dd 0FFFFFFh				; transparent color
-bgBrush	HBRUSH ?
-hDC		dd ?
-map1	dd ?					; map handler
+mapNum      = 1
+towerNum    = 5
+signNum     = 5
 
-towerHandler dd towerNum DUP(?) 
-towerSignHandler dd towerNum DUP(?) 
+mapHandler      BitmapInfo mapNum DUP(<>)
+towerHandler    BitmapInfo towerNum DUP(<>) 
+signHandler     BitmapInfo signNum DUP(<>)
 
-
-hBitmap	dd ?
-memDC	dd ?
-imgDC	dd ?
-temp    dd ?
-rect    RECT <>
+tcolor	    dd 0FFFFFFh				; transparent color
+hDC		    dd ?
+hBitmap	    dd ?
+memDC	    dd ?
+imgDC	    dd ?
+temp        dd ?
+rect        RECT <>
 
 ENDIF

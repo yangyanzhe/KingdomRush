@@ -8,6 +8,8 @@ INCLUDE core.inc
 INCLUDE data.inc
 .data
 
+Game GameInfo <>
+
 MAP_WIDTH   =   700
 MAP_HEIGHT  =   600
 MAP_SIZE    =   MAP_WIDTH * MAP_HEIGHT
@@ -58,10 +60,8 @@ Initialize_Tower_Loop:
     mov     (Tower PTR [ebx]).Range, 100        ;塔的攻击范围
     mov     edi, [eax]                          ;塔的位置：存在TOWERPOSITION数组中
     mov     (Tower PTR [ebx]).Pos.x, edi
-    mov     (Tower PTR [ebx]).Location.x, edi
     mov     edi, [eax+4] 
     mov     (Tower PTR [ebx]).Pos.y, edi
-    mov     (Tower PTR [ebx]).Location.y, edi
     add     eax, 8
     add     ebx, TYPE Tower
     loop    Initialize_Tower_Loop
