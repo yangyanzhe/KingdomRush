@@ -296,15 +296,20 @@ PaintProc PROC hWin:DWORD
 	INVOKE StretchBlt, memDC, client.x, client.y, client.w, client.h, imgDC, bgstart.x, bgstart.y, bgstart.w, bgstart.h, SRCCOPY
 
 	; »­¿ÕµØ
-	;mov	   esi, OFFSET towerHandler
-	;mov    ecx, 8
-	;INVOKE SelectObject, imgDC, [esi]
-	;mov    esi, OFFSET towerLocation
-;DrawBlank:
-	;mov    
-	;INVOKE StretchBlt, memDC, , imgDC, 0 , 0, blankSize.x, blankSize.y
-	;loop   DrawBlank
+	mov	   esi, OFFSET towerHandler
 	
+	INVOKE SelectObject, imgDC, [esi]
+	mov    esi, OFFSET towerLocation
+	mov    ecx, locationNum
+DrawBlank:
+	push   ecx
+	mov    eax, (Coord PTR [esi]).x
+	mov	   ebx, (Coord PTR [esi]).y
+	sub	   ebx, blankSize.y
+	INVOKE TransparentBlt, memDC, eax, ebx, blankSize.x, blankSize.y, imgDC, 0 , 0, blankSize.x, blankSize.y, tcolor
+	add    esi, sizeof Coord
+	pop    ecx
+	loop   DrawBlank
 	
 	; »­Ëþ
 

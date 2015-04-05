@@ -21,9 +21,10 @@ ENEMY_MONEY_0 = 10
 TOWERPOSITION dd 248, 312, 246, 365
 
 ; Ëþ×óÏÂ½Ç×ø±ê
-towerLocation Coord <200, 200>, <140, 180>, <210, 275>,
-					<210, 330>, <280, 330>, <420, 340>, 
-					<340, 420>, <530, 400>
+towerLocation Coord <200, 200>, <140, 180>, <220, 335>,
+					<210, 380>, <300, 390>, <420, 390>, 
+					<340, 500>, <550, 480>
+locationNum = 8
 
 sodierSize	Coord <80, 60>
 turretSize	Coord <80, 56>

@@ -7,9 +7,8 @@ INCLUDE data.inc
 InitiateImages	PROTO :DWORD
 
 towerNum  =	 5
-
-
 .data
+tcolor	dd 0FFFFFFh				; transparent color
 bgBrush	HBRUSH ?
 hDC		dd ?
 map1	dd ?					; map handler
