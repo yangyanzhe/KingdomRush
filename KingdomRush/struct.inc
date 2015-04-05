@@ -2,10 +2,10 @@ IFNDEF STRUCT_INC
 STRUCT_INC  equ <0>
 
 location struct
-    x DWORD ?
-    y DWORD ?
-    w DWORD 0
-    h DWORD 0
+    x dd ?
+    y dd ?
+    w dd ?
+    h dd ?
 location ends
 
 Coord struct
@@ -70,10 +70,20 @@ GameInfo struct
     RoundArray			Round 20 dup(<>)		;游戏所有轮次
 GameInfo ends
 
+; 图片信息
 BitmapInfo struct
     bWidth              dd ?
     bHeight             dd ?
     bHandler            dd ?
 BitmapInfo ends
+
+; 怪物图片信息
+MonsterBitmapInfo struct
+	up 					BitmapInfo <>, <>
+	right 				BitmapInfo <>, <>
+	down 				BitmapInfo <>, <>
+	left 				BitmapInfo <>, <>
+	die					BitmapInfo <>, <>
+MonsterBitmapInfo ends
 
 ENDIF

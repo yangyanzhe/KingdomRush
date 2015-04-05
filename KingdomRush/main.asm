@@ -18,7 +18,7 @@ INCLUDELIB  msimg32.lib
 INCLUDE     struct.inc
 INCLUDE     data.inc
 INCLUDE     core.inc
-INCLUDE     gui.inc
+INCLUDE     main.inc
 
 white  = 1111b
 
@@ -48,6 +48,20 @@ IDB_ARROW       EQU 116
 IDB_MAGIC		EQU 117
 IDB_SODIER		EQU 118
 IDB_TURRET		EQU 119
+
+; Monster编号规则：ID+方向+状态
+; 例如：101表示ID：1，方向：0，状态：1
+IDB_MONSTER1	EQU 200	
+IDB_MONSTER100	EQU 200
+IDB_MONSTER101	EQU 201
+IDB_MONSTER110	EQU 202
+IDB_MONSTER111	EQU 203
+IDB_MONSTER120	EQU 204
+IDB_MONSTER121	EQU 205
+IDB_MONSTER130	EQU 206
+IDB_MONSTER131	EQU 207
+IDB_MONSTER140	EQU 208
+IDB_MONSTER141	EQU 209
 
 ;=================== CODE =========================
 InitImages PROTO,
@@ -109,23 +123,23 @@ WinMain PROC
     mov     ebx, 2
 	mov     edx, 0
 	mov     eax, scrWidth
-	sub     eax, window.w
+	sub     eax, window_w
 	div     ebx
-	mov     window.x, eax
+	mov     window_x, eax
 	mov     eax, scrHeight
-	sub     eax, window.h
+	sub     eax, window_h
 	div     ebx
-	mov     window.y, eax
+	mov     window_y, eax
 
     INVOKE  CreateWindowEx, 
             0, 
             OFFSET classname,
             OFFSET windowname, 
             WS_OVERLAPPED or WS_SYSMENU or WS_MINIMIZEBOX ,
-            window.x, 
-            window.y, 
-            window.w,
-            window.h, 
+            window_x, 
+            window_y, 
+            window_w,
+            window_h, 
             NULL, 
             NULL, 
             hInstance, 
@@ -168,8 +182,6 @@ WinProc PROC,
     wParam: DWORD, 
     lParam: DWORD
 ;-----------------------------------------------------
-    LOCAL   srcPosition: POINTS
-    LOCAL   destPosition: POINTS
     LOCAL   cursorPosition: POINTS
 	LOCAL	ps: PAINTSTRUCT
 
@@ -178,6 +190,12 @@ WinProc PROC,
     .IF eax == WM_TIMER
       INVOKE    TimerProc, hWnd
       jmp    	WinProcExit
+    .ELSEIF eax == WM_PAINT         ; 绘图
+	  INVOKE    BeginPaint, hWnd, ADDR ps
+	  mov       hDC, eax
+	  INVOKE    PaintProc, hWnd
+	  INVOKE    EndPaint, hWnd, ADDR ps
+	  jmp       WinProcExit
     .ELSEIF eax == WM_LBUTTONDOWN       ; 鼠标事件
       mov  	    ebx, lParam
       mov  	    cursorPosition.x, bx
@@ -195,12 +213,6 @@ WinProc PROC,
       INVOKE    LoadGameInfo
       INVOKE    SetTimer, hWnd, 1, 1000, NULL
       jmp    	WinProcExit
-    .ELSEIF eax == WM_PAINT         ; 绘图
-	  INVOKE    BeginPaint, hWnd, ADDR ps
-	  mov       hDC, eax
-	  INVOKE    PaintProc, hWnd
-	  INVOKE    EndPaint, hWnd, ADDR ps
-	  jmp       WinProcExit
     .ELSE                           ; 其他事件
       INVOKE 	DefWindowProc, hWnd, localMsg, wParam, lParam
       jmp    	WinProcExit
@@ -287,6 +299,39 @@ LoadSign:
     add     edx, 1
     pop     ecx
     loop    LoadSign
+	
+    mov     ecx, monsterNum
+    mov     ebx, OFFSET monsterHandler
+    mov     edx, IDB_MONSTER1
+LoadMonster:
+    push    ecx
+	
+	mov 	ecx, 5
+LoadMonster0:
+	push 	ecx
+    INVOKE  LoadBitmap, hInst, edx
+    mov     (BitmapInfo PTR [ebx]).bHandler, eax
+    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
+    mov     eax, bm.bmWidth
+    mov     (BitmapInfo PTR [ebx]).bWidth, eax
+    mov     eax, bm.bmHeight
+    mov     (BitmapInfo PTR [ebx]).bHeight, eax
+	add 	ebx, TYPE BitmapInfo
+	add 	edx, 1
+    INVOKE  LoadBitmap, hInst, edx
+    mov     (BitmapInfo PTR [ebx]).bHandler, eax
+    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
+    mov     eax, bm.bmWidth
+    mov     (BitmapInfo PTR [ebx]).bWidth, eax
+    mov     eax, bm.bmHeight
+    mov     (BitmapInfo PTR [ebx]).bHeight, eax
+	add 	ebx, TYPE BitmapInfo
+	add 	edx, 1
+	pop 	ecx
+	loop 	LoadMonster0
+
+    pop     ecx
+    loop    LoadMonster
 
 	ret
 InitImages ENDP
@@ -294,7 +339,6 @@ InitImages ENDP
 ;-----------------------------------------------------------------------
 PaintTowers PROC
 ;-----------------------------------------------------------------------
-    LOCAL 	bm: BITMAP
 
     ; 画出所有空地
 	INVOKE  SelectObject, imgDC, towerHandler[0].bHandler
@@ -312,55 +356,78 @@ DrawBlank:
 	add     ebx, TYPE Tower
 	pop     ecx
 	loop    DrawBlank
+	
+	; 画出存在的塔
 
     ret
 PaintTowers ENDP
 
+;---------------------------------------------------------
+PaintMonsters PROC
+;
+; LoadImage of game. If more levels are designed, considering
+; input the level number.
+; Receives: handler
+; Returns:  nothing
+;---------------------------------------------------------
+	LOCAL   mWidth: DWORD
+	LOCAL   mHeight: DWORD
+
+	mov		mWidth, 35
+	mov		mHeight, 30
+
+	INVOKE	SelectObject, imgDC, monsterHandler.up[0].bHandler
+	INVOKE	TransparentBlt, 
+			memDC, 0, 0, mWidth, mHeight, 
+			imgDC, 0, 0, mWidth, mHeight, 
+			tcolor
+	ret
+PaintMonsters ENDP
+
 ;-----------------------------------------------------------------------
-PaintProc PROC hWin:DWORD
+PaintProc PROC,
+	hWnd:DWORD
 ;
 ; Painting  Function
 ; Receives: Windows handler
 ; Returns:  nothing
 ;-----------------------------------------------------------------------
-	LOCAL hOld: DWORD
+	LOCAL 	hBitmap: DWORD
+	LOCAL 	hOld: DWORD
 
-	push eax
-	push ebx
-	push esi
+    INVOKE 	CreateCompatibleDC, hDC
+    mov 	memDC, eax
+	INVOKE 	CreateCompatibleDC, hDC
+    mov 	imgDC, eax
 
-	INVOKE CreateCompatibleBitmap, hDC, client.w, client.h
-	mov hBitmap, eax
-    INVOKE CreateCompatibleDC, hDC
-    mov memDC, eax
-	INVOKE CreateCompatibleDC, hDC
-    mov imgDC, eax
-
-    INVOKE SelectObject, memDC, hBitmap
-    mov hOld, eax
+	INVOKE 	CreateCompatibleBitmap, hDC, window_w, window_h
+	mov 	hBitmap, eax
+    INVOKE 	SelectObject, memDC, hBitmap
+    mov 	hOld, eax
 
 	; 画地图
-	INVOKE SelectObject, imgDC, mapHandler[0].bHandler
-	INVOKE StretchBlt, memDC, client.x, client.y, client.w, client.h, imgDC, bgstart.x, bgstart.y, bgstart.w, bgstart.h, SRCCOPY
+	INVOKE 	SelectObject, imgDC, mapHandler[0].bHandler
+	INVOKE 	StretchBlt, 
+			memDC, 0, 0, window_w, window_h, 
+			imgDC, 0, 0, mapHandler[0].bWidth, mapHandler[0].bHeight, 
+			SRCCOPY
 
-	; 画空地
-	; 画塔
+	; 画空地，塔
     INVOKE  PaintTowers
 
 	; 画兵
 
 	; 画小怪
+	INVOKE 	PaintMonsters
+
 
 	; 画子弹
 
-	INVOKE BitBlt, hDC, 0, 0, window.w, window.h, memDC, 0, 0, SRCCOPY 
-    INVOKE DeleteDC,memDC
-	INVOKE DeleteDC,imgDC
-	INVOKE DeleteObject, hBitmap
-
-	pop esi
-	pop ebx
-	pop eax
+	
+	INVOKE 	BitBlt, hDC, 0, 0, window_w, window_h, memDC, 0, 0, SRCCOPY 
+    INVOKE 	DeleteDC, memDC
+	INVOKE 	DeleteDC, imgDC
+	INVOKE 	DeleteObject, hBitmap
 
 	ret
 PaintProc ENDP

@@ -71,10 +71,10 @@
     <None Include="resource\images\tower\blank.bmp">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="gui.inc">
+    <None Include="core.inc">
       <Filter>头文件</Filter>
     </None>
-    <None Include="core.inc">
+    <None Include="main.inc">
       <Filter>头文件</Filter>
     </None>
   </ItemGroup>

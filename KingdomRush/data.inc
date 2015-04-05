@@ -1,13 +1,13 @@
 IFNDEF  DATA_INC
 DATA_INC    equ <1>
 
+EXTERNDEF Game: GameInfo
+
 .data
 bgstart location <0, 0, 700, 600>
 board   location <50, 50, 144, 142>
 window  location <850, 150, 700, 640>
 client  location <0, 0, 700, 600>
-
-EXTERNDEF Game: GameInfo
 
 ROUND_NUMBER dd 4
 ROUND_TRIGGER_TIME dd 3000, 6000, 9000, 12000
@@ -22,16 +22,9 @@ ENEMY_MONEY_0 = 10
 TOWERPOSITION dd 248, 312, 246, 365
 
 ; Ëþ×óÏÂ½Ç×ø±ê
-towerLocation Coord <200, 200>, <140, 180>, <220, 335>,
+towerLocation Coord <200, 200>, <140, 230>, <220, 335>,
 					<210, 380>, <300, 390>, <420, 390>, 
 					<340, 500>, <550, 480>
 locationNum = 8
-
-sodierSize	Coord <80, 60>
-turretSize	Coord <80, 56>
-arrowSize	Coord <80, 70>
-magicSize	Coord <80, 70>
-blankSize	Coord <70, 50>
-signSize	Coord <46, 64>
 
 ENDIF
