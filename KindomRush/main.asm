@@ -20,17 +20,30 @@ hMainWnd        dd ?
 hIcon           dd ?
 classname       db "Game Application", 0
 windowname      db "Kingdom Rush", 0
-wndWidth        dd 600
+wndWidth        dd 700
 wndHeight       dd 600
 wndX            dd ?
 wndY            dd ?
 
 IDI_ICON        EQU 101
+IDB_STARTBG     EQU 103
 
 ;=================== CODE =========================
+MouseProc PROTO,
+	hWnd: DWORD,
+	cursorPosition: POINTS
+	
+PaintProc PROTO,
+    hWnd: DWORD,
+	resourceID: DWORD,
+	srcPosition: POINTS,
+	destPosition: POINTS
+
 .code
 
+;-----------------------------------------------------
 WinMain PROC
+;-----------------------------------------------------
     LOCAL   lWndClass: WNDCLASSEX
     LOCAL   lMsg: MSG
     LOCAL   lScreenWidth: DWORD
@@ -102,6 +115,9 @@ WinMain PROC
     INVOKE  ShowWindow, hMainWnd, SW_SHOW
     INVOKE  UpdateWindow, hMainWnd
 
+	; 创建内存DC
+	
+	
     ; 消息循环
 Message_Loop:
     INVOKE  GetMessage, ADDR lMsg, NULL, NULL, NULL
@@ -121,30 +137,107 @@ WinMain ENDP
 
 ;-----------------------------------------------------
 WinProc PROC,
-    hWnd:DWORD, localMsg:DWORD, wParam:DWORD, lParam:DWORD
-; The application's message handler, which handles
-; application-specific messages. All other messages
-; are forwarded to the default Windows message
-; handler.
+    hWnd: DWORD, 
+    localMsg: DWORD, 
+    wParam: DWORD, 
+    lParam: DWORD
 ;-----------------------------------------------------
+    LOCAL   srcPosition: POINTS
+    LOCAL   destPosition: POINTS
+    LOCAL   cursorPosition: POINTS
+
     mov      eax, localMsg
 
     .IF eax == WM_LBUTTONDOWN       ; 鼠标事件
-      jmp    WinProcExit
+      mov  	    ebx, lParam
+      mov  	    cursorPosition.x, bx
+	  shr  	    ebx, 16
+	  mov  	    cursorPosition.y, bx
+	  .IF wParam == MK_LBUTTON
+		INVOKE 	LMouseProc, hWnd, cursorPosition
+	  .ENDIF
+      jmp    	WinProcExit
     .ELSEIF eax == WM_CLOSE         ; 关闭窗口事件
-      INVOKE PostQuitMessage, 0
-      jmp    WinProcExit
+      INVOKE 	PostQuitMessage, 0
+      jmp    	WinProcExit
     .ELSEIF eax == WM_CREATE        ; 创建窗口事件
-      INVOKE SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
-      jmp    WinProcExit
+      INVOKE 	SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
+      jmp    	WinProcExit
+    .ELSEIF eax == WM_PAINT         ; 绘图
+      mov    	srcPosition.x, 0
+      mov    	srcPosition.y, 0
+      mov    	destPosition.x, 0
+      mov    	destPosition.y, 0
+      INVOKE 	PaintProc, hWnd, IDB_STARTBG, srcPosition, destPosition
+      jmp    	WinProcExit
+      ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
     .ELSE                           ; 其他事件
-      INVOKE DefWindowProc, hWnd, localMsg, wParam, lParam
-      jmp    WinProcExit
+      INVOKE 	DefWindowProc, hWnd, localMsg, wParam, lParam
+      jmp    	WinProcExit
     .ENDIF
 
 WinProcExit:
     ret
 WinProc ENDP
+
+;-----------------------------------------------------------------------
+MouseProc PROC,
+	hWnd: DWORD,
+	cursorPosition: POINTS
+;-----------------------------------------------------------------------
+    ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+
+    ret
+MouseProc ENDP
+
+;-----------------------------------------------------------------------
+PaintProc PROC,
+    hWnd: DWORD,
+	resourceID: DWORD,
+	srcPosition: POINTS,
+	destPosition: POINTS
+;-----------------------------------------------------------------------
+	LOCAL 	ps: PAINTSTRUCT
+	LOCAL 	srcDC: DWORD
+	LOCAL 	memDC: DWORD
+	LOCAL 	imgDC: DWORD
+	LOCAL 	originBitmap: DWORD
+	LOCAL 	memBitmap: DWORD
+	LOCAL 	bm: BITMAP
+	
+	INVOKE	BeginPaint, hWnd, ADDR ps
+	mov 	srcDC, eax
+	INVOKE 	CreateCompatibleDC, srcDC
+	mov 	memDC, eax
+	INVOKE 	CreateCompatibleDC, srcDC
+	mov 	imgDC, eax
+	
+	INVOKE 	CreateCompatibleBitmap, srcDC, wndWidth, wndHeight
+	mov 	memBitmap, eax
+	INVOKE 	SelectObject, memDC, memBitmap
+	INVOKE 	LoadBitmap, hInstance, resourceID
+	mov 	originBitmap, eax
+	INVOKE 	SelectObject, imgDC, originBitmap
+	
+	INVOKE 	GetObject, originBitmap, SIZEOF BITMAP, ADDR bm
+	INVOKE 	StretchBlt, 
+			memDC, destPosition.x, destPosition.y, bm.bmWidth, bm.bmHeight,
+			imgDC, srcPosition.x, srcPosition.y, bm.bmWidth, bm.bmHeight,
+			SRCCOPY
+    INVOKE  StretchBlt, 
+			srcDC, destPosition.x, destPosition.y, bm.bmWidth, bm.bmHeight,
+			memDC, srcPosition.x, srcPosition.y, bm.bmWidth, bm.bmHeight,
+			SRCCOPY
+	
+	INVOKE 	DeleteObject, memBitmap
+	INVOKE 	DeleteDC, memDC
+	INVOKE	DeleteObject, originBitmap
+	INVOKE 	DeleteDC, imgDC
+	INVOKE 	ReleaseDC, hWnd, srcDC
+	
+	INVOKE 	EndPaint, hWnd, ADDR ps
+    ret
+PaintProc ENDP
 
 ;---------------------------------------------------
 ErrorHandler PROC

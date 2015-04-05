@@ -30,19 +30,7 @@ INCLUDE data.inc
 
 
 .code      
-start:      
-	INVOKE GetTickCount
-	INVOKE nseed, eax
-
-    INVOKE GetModuleHandle,0    ;获取应用程序模块句柄   
-    mov hInstance,eax           ;保存应用程序句柄 
-
-	INVOKE GetCommandLine
-	mov CommandLine, eax
-    
-	INVOKE WinMain,hInstance,0,CommandLine,SW_SHOWDEFAULT      
-    INVOKE ExitProcess,eax      ;退出程序,并返回eax的值   
-
+  
 ;-------------------------------------------------------
 WinMain PROC hInst:DWORD, 
 			 hPrevInst:DWORD,
@@ -147,7 +135,7 @@ WinMain PROC hInst:DWORD,
                             0,0,      
                             hInst,0           
 	.IF eax == 0		
-		call ErrorHandler
+		call ErrorHandler1
 		jmp Exit_Program
 	.ENDIF		  
 
@@ -217,7 +205,7 @@ WndProc PROC hWin:DWORD, uMsg:DWORD, wParam:DWORD, lParam:DWORD
 	.ELSEIF uMsg == WM_PAINT
 		INVOKE BeginPaint, hWin, ADDR ps
 		mov hDC, eax
-		INVOKE PaintProc, hWin
+		INVOKE PaintProc1, hWin
 		INVOKE EndPaint, hWin, ADDR ps
 		jmp WndProcExit
     .ELSE
@@ -231,7 +219,7 @@ WndProcExit:
 WndProc endp      
 
 ;------------------------------------------------------------------
-ErrorHandler PROC
+ErrorHandler1 PROC
 ;
 ;错误处理，打印出错误信息
 ;------------------------------------------------------------------
@@ -253,10 +241,10 @@ messageID  DWORD ?
 	; Free the error message string.
 	INVOKE LocalFree, pErrorMsg
 	ret
-ErrorHandler ENDP
+ErrorHandler1 ENDP
 
 ;-----------------------------------------------------------------------
-PaintProc PROC hWin:DWORD
+PaintProc1 PROC hWin:DWORD
 ;
 ; Painting Function
 ;-----------------------------------------------------------------------
@@ -295,6 +283,6 @@ PaintProc PROC hWin:DWORD
 	INVOKE DeleteDC,imgDC
 	INVOKE DeleteObject, hBitmap
     ret
-PaintProc ENDP
+PaintProc1 ENDP
 
-end start
+end

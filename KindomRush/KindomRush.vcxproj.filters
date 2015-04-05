@@ -32,6 +32,9 @@
     <None Include="resource\icons\ICON_256.ico">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="resource\images\start\StartBG.bmp">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
