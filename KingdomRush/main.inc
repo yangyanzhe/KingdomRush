@@ -67,4 +67,8 @@ IDB_MONSTER131	EQU 207
 IDB_MONSTER140	EQU 208
 IDB_MONSTER141	EQU 209
 
+BlankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>, 
+                      <300, 390>, <420, 390>, <340, 500>, <550, 480>
+BlankIndex      dd 0, 8
+
 ENDIF

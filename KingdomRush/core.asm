@@ -81,7 +81,7 @@ Initialize_Tower_Loop:
     mov     esi, OFFSET Game.RoundArray         ;esi指向每局轮次数组  
     mov     ecx, eax
 Initialize_Round_Loop:
-    mov     (Round PTR [esi]).Interval, 100
+    mov     (Round PTR [esi]).Interval, 1
     mov     (Round PTR [esi]).Now_Enemy, 0
     mov     ebx, pRound_time
     mov     eax, [ebx]

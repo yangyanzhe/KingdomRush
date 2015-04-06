@@ -156,7 +156,7 @@ WinProc PROC,
 	  INVOKE    PaintProc, hWnd
 	  INVOKE    EndPaint, hWnd, ADDR ps
 	  jmp       WinProcExit
-    .ELSEIF eax == WM_LBUTTONDOWN       ; 鼠标事件
+    .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标事件
       mov  	    ebx, lParam
       mov  	    cursorPosition.x, bx
 	  shr  	    ebx, 16
@@ -223,6 +223,18 @@ LoadMap:
     mov     (BitmapInfo PTR [ebx]).bWidth, eax
     mov     eax, bm.bmHeight
     mov     (BitmapInfo PTR [ebx]).bHeight, eax
+
+    ; Continue
+    ;mov     eax, edx
+    ;sub     eax, IDB_MAP
+    ;inc     eax
+    ;mov     ecx, BlankIndex[eax * TYPE DWORD]
+    ;dec     eax
+    ;sub     ecx, BlankIndex[eax * TYPE DWORD]
+    ;mov     (BitmapInfo PTR [ebx]).BlankNum, ecx
+    ;mov     edi, OFFSET BlankPosition
+    ; Continue
+
     add     ebx, TYPE mapHandler
     add     edx, 1
     pop     ecx
@@ -406,7 +418,6 @@ PaintProc PROC,
 
 	; 画小怪
 	INVOKE 	PaintMonsters
-
 
 	; 画子弹
 
