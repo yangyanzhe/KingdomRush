@@ -217,6 +217,7 @@ InitImages PROC,
     mov     edx, IDB_MAP
 LoadMap:
     push    ecx
+    push    edx
 	INVOKE  LoadBitmap, hInst, edx
     mov     (BitmapInfo PTR [ebx]).bHandler, eax
     INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
@@ -236,9 +237,10 @@ LoadMap:
     ;mov     edi, OFFSET BlankPosition
     ; Continue
 
-    add     ebx, TYPE mapHandler
-    add     edx, 1
+    pop     edx
     pop     ecx
+    add     ebx, TYPE BitmapInfo
+    add     edx, 1
     loop    LoadMap
 
     mov     ecx, towerNum
@@ -246,6 +248,7 @@ LoadMap:
     mov     edx, IDB_TOWER
 LoadTower:
     push    ecx
+    push    edx
     INVOKE  LoadBitmap, hInst, edx
     mov     (BitmapInfo PTR [ebx]).bHandler, eax
     INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
@@ -253,9 +256,10 @@ LoadTower:
     mov     (BitmapInfo PTR [ebx]).bWidth, eax
     mov     eax, bm.bmHeight
     mov     (BitmapInfo PTR [ebx]).bHeight, eax
-    add     ebx, TYPE towerHandler
-    add     edx, 1
+    pop     edx
     pop     ecx
+    add     ebx, TYPE BitmapInfo
+    add     edx, 1
     loop    LoadTower
 
     mov     ecx, signNum
@@ -263,6 +267,7 @@ LoadTower:
     mov     edx, IDB_SIGN
 LoadSign:
     push    ecx
+    push    edx
     INVOKE  LoadBitmap, hInst, edx
     mov     (BitmapInfo PTR [ebx]).bHandler, eax
     INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
@@ -270,9 +275,10 @@ LoadSign:
     mov     (BitmapInfo PTR [ebx]).bWidth, eax
     mov     eax, bm.bmHeight
     mov     (BitmapInfo PTR [ebx]).bHeight, eax
-    add     ebx, TYPE signHandler
-    add     edx, 1
+    pop     edx
     pop     ecx
+    add     ebx, TYPE BitmapInfo
+    add     edx, 1
     loop    LoadSign
 	
     mov     ecx, monsterNum
@@ -284,6 +290,7 @@ LoadMonster:
 	mov 	ecx, 5
 LoadMonster0:
 	push 	ecx
+    push    edx
     INVOKE  LoadBitmap, hInst, edx
     mov     (BitmapInfo PTR [ebx]).bHandler, eax
     INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
@@ -291,8 +298,11 @@ LoadMonster0:
     mov     (BitmapInfo PTR [ebx]).bWidth, eax
     mov     eax, bm.bmHeight
     mov     (BitmapInfo PTR [ebx]).bHeight, eax
+    pop     edx
 	add 	ebx, TYPE BitmapInfo
 	add 	edx, 1
+
+    push    edx
     INVOKE  LoadBitmap, hInst, edx
     mov     (BitmapInfo PTR [ebx]).bHandler, eax
     INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
@@ -300,9 +310,10 @@ LoadMonster0:
     mov     (BitmapInfo PTR [ebx]).bWidth, eax
     mov     eax, bm.bmHeight
     mov     (BitmapInfo PTR [ebx]).bHeight, eax
+    pop     edx
+    pop     ecx
 	add 	ebx, TYPE BitmapInfo
 	add 	edx, 1
-	pop 	ecx
 	loop 	LoadMonster0
 
     pop     ecx
@@ -353,8 +364,8 @@ PaintMonsters PROC
 
 DrawMonsters:
     push    ecx
-    mov     eax, (Enemy PTR [ebx]).Enemy_Type
     mov     edx, OFFSET monsterHandler
+    mov     eax, (Enemy PTR [ebx]).Enemy_Type
     .WHILE  eax > 0
       add   edx, TYPE MonsterBitmapInfo
       dec   eax
@@ -369,14 +380,15 @@ DrawMonsters:
     .IF     eax > 0
       add   edx, TYPE BitmapInfo
     .ENDIF
-    INVOKE  SelectObject, imgDC, monsterHandler.up[0].bHandler;(BitmapInfo PTR [edx]).bHandler
+    push    edx
+    INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
+    pop     edx
 	INVOKE	TransparentBlt, 
 			memDC, (Enemy PTR [ebx]).Current_Pos.x, (Enemy PTR [ebx]).Current_Pos.y,
-            35,30,
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
 			imgDC, 0, 0,
-            35,30,
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
 			tcolor
-            ;(BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
     add     ebx, TYPE Enemy
     pop     ecx
     loop    DrawMonsters
