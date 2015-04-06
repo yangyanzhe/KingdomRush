@@ -171,7 +171,7 @@ WinProc PROC,
     .ELSEIF eax == WM_CREATE        ; 创建窗口事件
       INVOKE 	SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
       INVOKE    LoadGameInfo
-      INVOKE    SetTimer, hWnd, 1, 100, NULL
+      INVOKE    SetTimer, hWnd, TIMER_ID, TIMER_INTERVAL, NULL
       jmp    	WinProcExit
     .ELSE                           ; 其他事件
       INVOKE 	DefWindowProc, hWnd, localMsg, wParam, lParam

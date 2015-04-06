@@ -71,4 +71,8 @@ BlankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>,
                       <300, 390>, <420, 390>, <340, 500>, <550, 480>
 BlankIndex      dd 0, 8
 
+TIMER_ID = 1
+
+TIMER_INTERVAL = 100
+
 ENDIF
