@@ -47,6 +47,7 @@ Round struct
     Interval            dd ?                    ;两个怪物出现时间间隔
     Tick                dd ?                    ;本轮专用计时器
     Trigger_Tick		dd ?                    ;本轮触发时间
+    state               dd ?                    ;本轮状态
 Round ends
 
 ;游戏信息
