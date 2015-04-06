@@ -80,9 +80,9 @@ BitmapInfo ends
 ; π÷ŒÔÕº∆¨–≈œ¢
 MonsterBitmapInfo struct
 	up 					BitmapInfo <>, <>
+	left 				BitmapInfo <>, <>
 	right 				BitmapInfo <>, <>
 	down 				BitmapInfo <>, <>
-	left 				BitmapInfo <>, <>
 	die					BitmapInfo <>, <>
 MonsterBitmapInfo ends
 

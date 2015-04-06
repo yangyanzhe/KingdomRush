@@ -370,18 +370,38 @@ PaintMonsters PROC
 ; Receives: handler
 ; Returns:  nothing
 ;---------------------------------------------------------
-	LOCAL   mWidth: DWORD
-	LOCAL   mHeight: DWORD
+	mov     eax, Game.pEnemyArray
+    mov     ebx, [eax]
+    mov     ecx, Game.Enemy_Num
+    cmp     ecx, 0
+    je      PaintMonstersExit
 
-	mov		mWidth, 35
-	mov		mHeight, 30
-
-	INVOKE	SelectObject, imgDC, monsterHandler.up[0].bHandler
+DrawMonsters:
+    push    ecx
+    mov     eax, (Enemy PTR [ebx]).Enemy_Type
+    mov     edx, OFFSET monsterHandler[edx * TYPE MonsterBitmapInfo]
+    mov     eax, (Enemy PTR [ebx]).Current_Dir
+    .WHILE  eax > 0
+      add   edx, TYPE BitmapInfo
+      add   edx, TYPE BitmapInfo
+      dec   eax
+    .ENDW
+    .IF     (Enemy PTR [ebx]).Gesture > 0
+      add   edx, TYPE BitmapInfo
+    .ENDIF
+    INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
 	INVOKE	TransparentBlt, 
-			memDC, 0, 0, mWidth, mHeight, 
-			imgDC, 0, 0, mWidth, mHeight, 
+			memDC, (Enemy PTR [ebx]).Current_Pos.x, (Enemy PTR [ebx]).Current_Pos.y,
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
+			imgDC, 0, 0,
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight,  
 			tcolor
-	ret
+    add     ebx, TYPE Enemy
+    pop     ecx
+    loop    DrawMonsters
+	
+PaintMonstersExit:
+    ret
 PaintMonsters ENDP
 
 ;-----------------------------------------------------------------------
