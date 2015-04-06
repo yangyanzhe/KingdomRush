@@ -70,7 +70,6 @@ ClickInfo struct
 	posY				dd ?
 ClickInfo ends
 
-
 ; Õº∆¨–≈œ¢
 BitmapInfo struct
     bWidth              dd ?
