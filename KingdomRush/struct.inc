@@ -1,13 +1,7 @@
 IFNDEF STRUCT_INC
 STRUCT_INC  equ <0>
 
-location struct
-    x dd ?
-    y dd ?
-    w dd ?
-    h dd ?
-location ends
-
+; µã
 Coord struct
     x dd ?
     y dd ?

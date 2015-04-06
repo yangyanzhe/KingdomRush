@@ -1,5 +1,5 @@
 IFNDEF MAIN_INC
-MAIN_INC     equ <2>
+MAIN_INC     equ <1>
 
 INCLUDE     struct.inc
 INCLUDE     data.inc

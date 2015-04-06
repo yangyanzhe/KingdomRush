@@ -23,9 +23,6 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <None Include="data.inc">
-      <Filter>头文件</Filter>
-    </None>
     <None Include="struct.inc">
       <Filter>头文件</Filter>
     </None>

@@ -15,17 +15,18 @@ INCLUDELIB  kernel32.lib
 INCLUDELIB  user32.lib
 INCLUDELIB  msimg32.lib
 
-INCLUDE     struct.inc
-INCLUDE     data.inc
 INCLUDE     core.inc
 INCLUDE     main.inc
 
 ;==================== DATA =======================
 .data
+Level       dd 0
 
 ;=================== CODE =========================
 InitImages PROTO,
     hInst:DWORD
+
+InitMapInfo PROTO
 
 TimerProc PROTO,
     hWnd: DWORD
@@ -60,6 +61,9 @@ WinMain PROC
     mov     wndClass.hIconSm, eax
     INVOKE  LoadCursor, hInstance, IDC_ARROW
     mov     wndClass.hCursor, eax
+
+    ; 加载图片
+	INVOKE  InitImages, hInstance 
 
 	; 初始化窗口
     mov     wndClass.cbSize, SIZEOF WNDCLASSEX
@@ -110,9 +114,6 @@ WinMain PROC
       call  ErrorHandler
       jmp   Exit_Program
     .ENDIF
-
-	; 加载图片
-	INVOKE  InitImages, hInstance 
 
     ; 绘制窗口
     INVOKE  ShowWindow, hMainWnd, SW_SHOW
@@ -170,6 +171,7 @@ WinProc PROC,
       jmp    	WinProcExit
     .ELSEIF eax == WM_CREATE        ; 创建窗口事件
       INVOKE 	SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
+      INVOKE    InitMapInfo
       INVOKE    LoadGameInfo
       INVOKE    SetTimer, hWnd, TIMER_ID, TIMER_INTERVAL, NULL
       jmp    	WinProcExit
@@ -182,25 +184,6 @@ WinProcExit:
     ret
 WinProc ENDP
 
-TimerProc PROC,
-    hWnd: DWORD
-    ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
-    INVOKE UpdateTimer
-    INVOKE UpdateEnemies
-    INVOKE InvalidateRect, hWnd, NULL, FALSE
-    ret
-TimerProc ENDP
-
-;-----------------------------------------------------------------------
-LMouseProc PROC,
-	hWnd: DWORD,
-	cursorPosition: POINTS
-;-----------------------------------------------------------------------
-    ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
-    ret
-LMouseProc ENDP
-
-
 ;---------------------------------------------------------
 InitImages PROC,
     hInst:DWORD
@@ -212,6 +195,7 @@ InitImages PROC,
 ;---------------------------------------------------------
     LOCAL   bm: BITMAP
 
+    ; 载入地图图片
     mov     ecx, mapNum
     mov     ebx, OFFSET mapHandler
     mov     edx, IDB_MAP
@@ -231,6 +215,7 @@ LoadMap:
     add     edx, 1
     loop    LoadMap
 
+    ; 载入空地位置
     mov     ecx, mapNum
     mov     ebx, OFFSET blankSet
     mov     edx, OFFSET blankIndex
@@ -258,6 +243,7 @@ LoadBlankPosition0:
     pop     ecx
     loop    LoadBlankPosition
 
+    ; 载入塔的图片
     mov     ecx, towerNum
     mov     ebx, OFFSET towerHandler
     mov     edx, IDB_TOWER
@@ -277,6 +263,7 @@ LoadTower:
     add     edx, 1
     loop    LoadTower
 
+    ; 载入塔的标志的图片
     mov     ecx, signNum
     mov     ebx, OFFSET signHandler
     mov     edx, IDB_SIGN
@@ -296,6 +283,7 @@ LoadSign:
     add     edx, 1
     loop    LoadSign
 	
+    ; 载入怪物图片
     mov     ecx, monsterNum
     mov     ebx, OFFSET monsterHandler
     mov     edx, IDB_MONSTER1
@@ -338,6 +326,48 @@ LoadMonster0:
 InitImages ENDP
 
 ;-----------------------------------------------------------------------
+InitMapInfo PROC
+;-----------------------------------------------------------------------
+    ; 初始化所有塔
+    mov     ecx, blankSet[0].number
+    mov     Game.Tower_Num, ecx
+    mov     ebx, OFFSET blankSet[0].position
+    mov     edx, OFFSET Game.TowerArray
+InitTower:  
+    mov     (Tower PTR [edx]).Tower_Type, 1     ;塔的初始类型为0（空地）
+    mov     (Tower PTR [edx]).Range, 100        ;塔的攻击范围
+    mov     eax, (Coord PTR [ebx]).x
+    mov     (Tower PTR [edx]).Pos.x, eax
+    mov     eax, (Coord PTR [ebx]).y
+    mov     (Tower PTR [edx]).Pos.y, eax
+    add     ebx, TYPE Coord
+    add     edx, TYPE Tower
+    loop    InitTower
+
+    ret
+InitMapInfo ENDP
+
+;-----------------------------------------------------------------------
+TimerProc PROC,
+    hWnd: DWORD
+;-----------------------------------------------------------------------
+    ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+    INVOKE UpdateTimer
+    INVOKE UpdateEnemies
+    INVOKE InvalidateRect, hWnd, NULL, FALSE
+    ret
+TimerProc ENDP
+
+;-----------------------------------------------------------------------
+LMouseProc PROC,
+	hWnd: DWORD,
+	cursorPosition: POINTS
+;-----------------------------------------------------------------------
+    ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+    ret
+LMouseProc ENDP
+
+;-----------------------------------------------------------------------
 PaintTowers PROC
 ;-----------------------------------------------------------------------
     ; 画出所有空地
@@ -366,6 +396,8 @@ DrawBlank:
 DrawTowers:
     push    ecx
     mov     eax, (Tower PTR [ebx]).Tower_Type
+    cmp     eax, 0
+    je      DrawTowers0
     mov     edx, OFFSET towerHandler
     .WHILE  eax > 0
       add   edx, TYPE BitmapInfo
@@ -382,6 +414,7 @@ DrawTowers:
             imgDC, 0, 0, 
             (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight,
             tcolor
+DrawTowers0:
 	add     ebx, TYPE Tower        
     pop     ecx
     loop    DrawTowers

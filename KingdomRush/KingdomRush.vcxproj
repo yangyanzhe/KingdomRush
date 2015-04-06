@@ -77,7 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="core.inc" />
-    <None Include="data.inc" />
     <None Include="main.inc" />
     <None Include="resource\icons\ICON_256.ico" />
     <None Include="resource\images\map\mapone.bmp" />

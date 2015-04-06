@@ -1,3 +1,24 @@
+IFNDEF CORE_INC
+CORE_INC     equ <2>
+
+INCLUDE     struct.inc
+INCLUDE     data.inc
+
+.data
+EXTERNDEF Game: GameInfo
+
+ROUND_NUMBER dd 4
+ROUND_TRIGGER_TIME dd 30, 300, 600, 900
+EACH_ROUND_ENEMY_NUMBER dd 3,4,5,6
+EACH_ROUND_ENEMY_TYPE dd 0,0,0,
+                         0,0,0,0,
+                         0,0,0,0,0,
+                         0,0,0,0,0,0
+APPEAR_INTERVAL = 30
+ENEMY_LIFE_0 = 40
+ENEMY_MONEY_0 = 10
+
+.code
 LoadGameInfo PROTO
 
 LoadGameMap PROTO
@@ -35,5 +56,4 @@ LoadGameInfo PROTO
 
 UpdateTimer PROTO
 
-TIMER_ID = 5
-TIMER_INTERVAL = 1000
+ENDIF
