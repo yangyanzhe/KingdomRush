@@ -370,7 +370,7 @@ PaintMonsters PROC
 ; Receives: handler
 ; Returns:  nothing
 ;---------------------------------------------------------
-	mov     eax, Game.pEnemyArray
+	mov     eax, OFFSET Game.pEnemyArray
     mov     ebx, [eax]
     mov     ecx, Game.Enemy_Num
     cmp     ecx, 0
@@ -379,14 +379,19 @@ PaintMonsters PROC
 DrawMonsters:
     push    ecx
     mov     eax, (Enemy PTR [ebx]).Enemy_Type
-    mov     edx, OFFSET monsterHandler[edx * TYPE MonsterBitmapInfo]
+    mov     edx, OFFSET monsterHandler
+    .WHILE  eax > 0
+      add   edx, TYPE MonsterBitmapInfo
+      dec   eax
+    .ENDW
     mov     eax, (Enemy PTR [ebx]).Current_Dir
     .WHILE  eax > 0
       add   edx, TYPE BitmapInfo
       add   edx, TYPE BitmapInfo
       dec   eax
     .ENDW
-    .IF     (Enemy PTR [ebx]).Gesture > 0
+    mov     eax, (Enemy PTR [ebx]).Gesture
+    .IF     eax > 0
       add   edx, TYPE BitmapInfo
     .ENDIF
     INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
