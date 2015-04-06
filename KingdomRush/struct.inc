@@ -36,9 +36,7 @@ Enemy struct
     Current_Dir 		dd ?
     Current_Life		dd ?
     Money				dd ?
-
-    Cur_img             dd ?
-    Tot_img             dd ?
+    Gesture             dd ?
 Enemy ends
 
 ;ÂÖ´Î
