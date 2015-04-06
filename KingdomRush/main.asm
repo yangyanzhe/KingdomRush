@@ -225,23 +225,38 @@ LoadMap:
     mov     (BitmapInfo PTR [ebx]).bWidth, eax
     mov     eax, bm.bmHeight
     mov     (BitmapInfo PTR [ebx]).bHeight, eax
-
-    ; Continue
-    ;mov     eax, edx
-    ;sub     eax, IDB_MAP
-    ;inc     eax
-    ;mov     ecx, BlankIndex[eax * TYPE DWORD]
-    ;dec     eax
-    ;sub     ecx, BlankIndex[eax * TYPE DWORD]
-    ;mov     (BitmapInfo PTR [ebx]).BlankNum, ecx
-    ;mov     edi, OFFSET BlankPosition
-    ; Continue
-
     pop     edx
     pop     ecx
     add     ebx, TYPE BitmapInfo
     add     edx, 1
     loop    LoadMap
+
+    mov     ecx, mapNum
+    mov     ebx, OFFSET blankSet
+    mov     edx, OFFSET blankIndex
+    mov     esi, OFFSET blankPosition
+LoadBlankPosition:
+    push    ecx
+    mov     eax, [edx + TYPE DWORD]
+    sub     eax, [edx]
+    mov     (PositionSet PTR [ebx]).number, eax
+
+    mov     ecx, eax
+    mov     edi, ebx
+    add     edi, TYPE DWORD
+LoadBlankPosition0:
+    mov     eax, (Coord PTR [esi]).x
+    mov     (Coord PTR [edi]).x, eax
+    mov     eax, (Coord PTR [esi]).y
+    mov     (Coord PTR [edi]).y, eax
+    add     esi, TYPE Coord
+    add     edi, TYPE Coord
+    loop    LoadBlankPosition0
+
+    add     ebx, TYPE PositionSet
+    add     edx, TYPE DWORD
+    pop     ecx
+    loop    LoadBlankPosition
 
     mov     ecx, towerNum
     mov     ebx, OFFSET towerHandler
@@ -325,21 +340,23 @@ InitImages ENDP
 ;-----------------------------------------------------------------------
 PaintTowers PROC
 ;-----------------------------------------------------------------------
-
     ; 画出所有空地
 	INVOKE  SelectObject, imgDC, towerHandler[0].bHandler
-    
-    mov     ecx, Game.Tower_Num
-    mov     ebx, OFFSET Game.TowerArray
+    ;mov     ecx, Game.Tower_Num
+    ;mov     ebx, OFFSET Game.TowerArray
+    mov     ecx, blankSet[0].number
+    mov     ebx, OFFSET blankSet[0].position
 DrawBlank:
 	push    ecx
+    mov     eax, (Coord PTR [ebx]).y
+    sub     eax, towerHandler[0].bHeight
 	INVOKE  TransparentBlt, 
-            memDC, (Tower PTR [ebx]).Pos.x, (Tower PTR [ebx]).Pos.y,
+            memDC, (Coord PTR [ebx]).x, eax,
             towerHandler[0].bWidth, towerHandler[0].bHeight,
             imgDC, 0, 0, 
             towerHandler[0].bWidth, towerHandler[0].bHeight,
             tcolor
-	add     ebx, TYPE Tower
+	add     ebx, TYPE Coord
 	pop     ecx
 	loop    DrawBlank
 	

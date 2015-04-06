@@ -31,6 +31,7 @@ signNum     	= 5
 monsterNum	 	= 1
 
 mapHandler      BitmapInfo mapNum DUP(<>)
+blankSet        PositionSet mapNum DUP(<>)
 towerHandler    BitmapInfo towerNum DUP(<>) 
 signHandler     BitmapInfo signNum DUP(<>)
 monsterHandler  MonsterBitmapInfo monsterNum DUP(<>)
@@ -38,6 +39,10 @@ monsterHandler  MonsterBitmapInfo monsterNum DUP(<>)
 IDI_ICON        EQU 101
 IDB_MAP         EQU 102
 IDB_MAPONE      EQU 102
+
+blankIndex      dd 0, 8
+blankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>, 
+                      <300, 390>, <420, 390>, <340, 500>, <550, 480>
 
 IDB_SIGN        EQU 110
 IDB_CIRCLE		EQU 110
@@ -66,9 +71,5 @@ IDB_MONSTER130	EQU 206
 IDB_MONSTER131	EQU 207
 IDB_MONSTER140	EQU 208
 IDB_MONSTER141	EQU 209
-
-BlankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>, 
-                      <300, 390>, <420, 390>, <340, 500>, <550, 480>
-BlankIndex      dd 0, 8
 
 ENDIF

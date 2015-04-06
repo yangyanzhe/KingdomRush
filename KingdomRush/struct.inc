@@ -76,13 +76,6 @@ BitmapInfo struct
     bHandler            dd ?
 BitmapInfo ends
 
-; 地图图片信息
-MapBitmapInfo struct
-    map                 BitmapInfo <>
-    blankNum            dd ?
-    blankPosition       Coord 100 DUP(<>)
-MapBitmapInfo ends
-
 ; 怪物图片信息
 MonsterBitmapInfo struct
 	up 					BitmapInfo <>, <>
@@ -91,5 +84,12 @@ MonsterBitmapInfo struct
 	down 				BitmapInfo <>, <>
 	die					BitmapInfo <>, <>
 MonsterBitmapInfo ends
+
+; 地图中空地位置信息
+PositionSet struct
+    number              dd 0
+    position            Coord <>, <>, <>, <>, <>, <>, <>, <>, <>, <>,
+                              <>, <>, <>, <>, <>, <>, <>, <>, <>, <>
+PositionSet ends
 
 ENDIF
