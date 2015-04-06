@@ -393,10 +393,6 @@ PaintTowers ENDP
 ;---------------------------------------------------------
 PaintMonsters PROC
 ;
-; LoadImage of game. If more levels are designed, considering
-; input the level number.
-; Receives: handler
-; Returns:  nothing
 ;---------------------------------------------------------
 	mov     eax, OFFSET Game.pEnemyArray
     mov     esi, eax
@@ -440,6 +436,57 @@ PaintMonstersExit:
     ret
 PaintMonsters ENDP
 
+;---------------------------------------------------------
+PaintSigns PROC uses eax esi ebx ecx
+;
+;---------------------------------------------------------
+	LOCAL x:DWORD				; after calculation, x
+	LOCAL y:DWORD				; after calculation, y
+	LOCAL oriX:DWORD			; original clicked x
+	LOCAL oriY:DWORD			; original clicked y
+
+	mov	eax, clickHandler.flag
+	cmp	eax, 0
+	jz PaintSignsExit
+
+	; change the click position to the center position, continue...
+	mov		eax, clickHandler.posX
+	mov		oriX, eax
+	mov		eax, clickHandler.posY
+	mov		oriY, eax
+
+	mov eax, 0
+	mov ecx, signNum
+	mov ebx, OFFSET signHandler
+	mov esi, OFFSET SignPosition
+DrawSigns:
+	mov		eax, oriY					; calculate sign-y
+	add		eax, (Coord PTR [esi]).y
+	mov		y, eax
+
+	mov		eax, oriX					; calculate sign-x
+	add		eax, (Coord PTR [esi]).x
+	mov		x, eax
+
+	push    ecx							; save ecx, eax
+	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+
+	INVOKE	TransparentBlt, 
+			memDC, x, y,
+            (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
+			imgDC, 0, 0,
+            (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
+			tcolor
+
+	add		esi, sizeof Coord
+	add		ebx, sizeof BitmapInfo
+	pop		ecx
+	loop	DrawSigns
+
+PaintSignsExit:
+    ret
+PaintSigns ENDP
+
 ;-----------------------------------------------------------------------
 PaintProc PROC,
 	hWnd:DWORD
@@ -478,6 +525,8 @@ PaintProc PROC,
 
 	; 画子弹
 
+	; 画建塔提示圆圈
+	INVOKE	PaintSigns
 	
 	INVOKE 	BitBlt, hDC, 0, 0, window_w, window_h, memDC, 0, 0, SRCCOPY 
     INVOKE 	DeleteDC, memDC

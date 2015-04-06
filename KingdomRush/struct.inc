@@ -69,6 +69,14 @@ GameInfo struct
     RoundArray			Round 20 dup(<>)		;游戏所有轮次
 GameInfo ends
 
+; 点击信息
+ClickInfo struct
+	flag				dd ?
+	posX				dd ?
+	posY				dd ?
+ClickInfo ends
+
+
 ; 图片信息
 BitmapInfo struct
     bWidth              dd ?
