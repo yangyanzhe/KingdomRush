@@ -81,8 +81,9 @@ Initialize_Tower_Loop:
     mov     esi, OFFSET Game.RoundArray         ;esi指向每局轮次数组  
     mov     ecx, eax
 Initialize_Round_Loop:
-    mov     (Round PTR [esi]).Interval, 100
+    mov     (Round PTR [esi]).Interval, 1
     mov     (Round PTR [esi]).Now_Enemy, 0
+    mov     (Round PTR [esi]).state, 0
     mov     ebx, pRound_time
     mov     eax, [ebx]
     mov     (Round PTR [esi]).Trigger_Tick, eax  ;设置每轮触发时间
@@ -171,8 +172,11 @@ UpdateEnemies PROC
     mov ebx, eax  
     mov eax, (Round PTR [ebx]).Trigger_Tick
     .IF Game.Tick >= eax
-        inc Game.Now_Round
+        .IF Game.Now_Round != 0
+            inc Game.Now_Round
+        .ENDIF
         inc Game.Next_Round
+        mov (Round PTR [ebx]).state, 1
         mov (Round PTR [ebx]).Tick, 0 ;新一轮计时器清零
         mov eax, Game.Round_Num
     .ENDIF
@@ -181,6 +185,10 @@ Jump1:
     INVOKE GetRound, Game.Now_Round ;获取本轮句柄
     mov pRound, eax
     mov ebx, eax
+    mov eax, (Round PTR [ebx]).state
+    .IF eax == 0
+        jmp UpdateEnemiesExit
+    .ENDIF
     ;判断是否加入一只新的怪物
     mov eax, (Round PTR [ebx]).Now_Enemy
     mov edx, (Round PTR [ebx]).Enemy_Num
@@ -201,10 +209,15 @@ Jump2:
     ;移动场上所有怪物
     mov ebx, OFFSET Game.pEnemyArray
     mov ecx, Game.Enemy_Num
+    .IF ecx == 0
+        jmp UpdateEnemiesExit
+    .ENDIF
 Loop_EnemyMove:
-    INVOKE EnemyMove, ebx
+    INVOKE EnemyMove, [ebx]
     add ebx, TYPE DWORD
     loop Loop_EnemyMove
+
+UpdateEnemiesExit:
     popad
     ret
 UpdateEnemies ENDP
@@ -330,11 +343,11 @@ ActivateEnemy PROC USES esi ecx ebx,
 ;----------------------------------------------------------------------
     ;将特定怪物指针加入当前游戏怪物指针队列中
     mov     esi, OFFSET Game.pEnemyArray
+    inc     Game.Enemy_Num
     mov     ecx, Game.Enemy_Num
     dec     ecx
     mov     ebx, pEnemy
     mov     [esi + ecx * TYPE DWORD], ebx
-    inc     Game.Enemy_Num
 
     ;初始化怪物的初始、当前、终点位置
     mov     esi, pEnemy
@@ -355,7 +368,7 @@ ActivateEnemy PROC USES esi ecx ebx,
 ActivateEnemy ENDP
 
 ;----------------------------------------------------------------------   
-EnemyMove PROC USES edi esi ebx eax,
+EnemyMove PROC,
         pEnemy: DWORD
         LOCAL p_x: DWORD,  
               p_y: DWORD,
@@ -370,10 +383,11 @@ EnemyMove PROC USES edi esi ebx eax,
 ;           选择（四），选择与原先方向相反的方向移动。
 ;require: 特定怪物的指针
 ;----------------------------------------------------------------------
+    pushad
     mov     edi, pEnemy
 
     ;变更动作
-    not     (Enemy PTR [edi]).Gesture
+    xor     (Enemy PTR [edi]).Gesture, 1
 
     mov     ebx, OFFSET Game_Map
     mov     ecx, (Enemy PTR [edi]).Current_Pos.y
@@ -393,8 +407,8 @@ STEP1:
     ;check if current direction is movable
     mov     ecx, (Enemy PTR [edi]).Current_Dir
     INVOKE  CheckMovable, ebx, ecx
-    cmp     eax, 0
-    je      STEP2
+    ;cmp     eax, 0
+    ;je      STEP2
     mov     choosed_dir, ecx
     jmp     EnemyMove_Exit
 STEP2:
@@ -449,10 +463,11 @@ EnemyMove_Exit:
     .ELSEIF eax == LEFT
       dec     (Enemy PTR [edi]).Current_Pos.x
     .ELSEIF eax == RIGHT
-      inc     (Enemy PTR [edi]).Current_Pos.y
-    .ELSE
       inc     (Enemy PTR [edi]).Current_Pos.x
+    .ELSE
+      inc     (Enemy PTR [edi]).Current_Pos.y
     .ENDIF
+    popad
     ret
 EnemyMove ENDP
 
@@ -600,7 +615,7 @@ GetRound_Loop:
 GetRound ENDP
 
 ;----------------------------------------------------------------------
-GetRoundEnemy PROC USES ebx esi,
+GetRoundEnemy PROC USES ebx esi ecx,
     pRound: DWORD,
     _EnemyNumber: DWORD
 ;获取某轮某怪的句柄
