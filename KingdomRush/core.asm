@@ -81,7 +81,7 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
     mov     esi, OFFSET Game.RoundArray         ;esi指向每局轮次数组  
     mov     ecx, eax
 Initialize_Round_Loop:
-    mov     (Round PTR [esi]).Interval, 1
+    mov     (Round PTR [esi]).Interval, APPEAR_INTERVAL
     mov     (Round PTR [esi]).Now_Enemy, 0
     mov     (Round PTR [esi]).state, 0
     mov     ebx, pRound_time
@@ -172,7 +172,7 @@ UpdateEnemies PROC
     mov ebx, eax  
     mov eax, (Round PTR [ebx]).Trigger_Tick
     .IF Game.Tick >= eax
-        .IF Game.Now_Round != 0
+        .IF Game.Next_Round != 0
             inc Game.Now_Round
         .ENDIF
         inc Game.Next_Round
@@ -182,6 +182,10 @@ UpdateEnemies PROC
     .ENDIF
 
 Jump1:
+    mov eax, Game.Now_Round
+    .IF eax == 1
+        mov eax, eax
+    .ENDIF
     INVOKE GetRound, Game.Now_Round ;获取本轮句柄
     mov pRound, eax
     mov ebx, eax
@@ -213,6 +217,14 @@ Jump2:
         jmp UpdateEnemiesExit
     .ENDIF
 Loop_EnemyMove:
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     add ebx, TYPE DWORD
     loop Loop_EnemyMove
@@ -388,13 +400,12 @@ EnemyMove PROC,
 
     ;变更动作
     xor     (Enemy PTR [edi]).Gesture, 1
-
-    mov     ebx, OFFSET Game_Map
+    mov     ebx, 0
     mov     ecx, (Enemy PTR [edi]).Current_Pos.y
     cmp     ecx, 0
     je      GETY_Done
 GETY:
-    add     ebx, (MAP_WIDTH)
+    add     ebx, MAP_WIDTH
     loop    GETY
 GETY_Done:
     mov     ecx, (Enemy PTR [edi]).Current_Pos.x
@@ -407,8 +418,8 @@ STEP1:
     ;check if current direction is movable
     mov     ecx, (Enemy PTR [edi]).Current_Dir
     INVOKE  CheckMovable, ebx, ecx
-    ;cmp     eax, 0
-    ;je      STEP2
+    cmp     eax, 0
+    je      STEP2
     mov     choosed_dir, ecx
     jmp     EnemyMove_Exit
 STEP2:
@@ -460,12 +471,16 @@ EnemyMove_Exit:
     mov     eax, choosed_dir
     .IF eax == UP
       dec     (Enemy PTR [edi]).Current_Pos.y
+      mov     (Enemy PTR [edi]).Current_Dir, UP
     .ELSEIF eax == LEFT
       dec     (Enemy PTR [edi]).Current_Pos.x
+      mov     (Enemy PTR [edi]).Current_Dir, LEFT
     .ELSEIF eax == RIGHT
       inc     (Enemy PTR [edi]).Current_Pos.x
+      mov     (Enemy PTR [edi]).Current_Dir, RIGHT
     .ELSE
       inc     (Enemy PTR [edi]).Current_Pos.y
+      mov     (Enemy PTR [edi]).Current_Dir, DOWN
     .ENDIF
     popad
     ret
@@ -569,24 +584,41 @@ LoadGameMap ENDP
 
 ;----------------------------------------------------------------------     
 CheckMovable PROC USES edi ebx ecx,
-    pPoint: DWORD,
+    Pos: DWORD,
     Dir: DWORD
 ;判断某点是否可以移动
 ;require: 当前点坐标，想移动的方位
 ;----------------------------------------------------------------------
-    mov     edi, pPoint   
+    mov     edi, Pos
     mov     ebx, Dir
     .IF ebx == UP
+      .IF edi < MAP_WIDTH
+        mov eax, 0
+        ret
+      .ENDIF
       sub   edi, MAP_WIDTH
     .ELSEIF ebx == DOWN
       add   edi, MAP_WIDTH
+      .IF edi >= MAP_SIZE
+        mov eax, 0
+        ret
+      .ENDIF
     .ELSEIF ebx == LEFT
+      .IF edi < 1
+        mov eax, 0
+        ret
+      .ENDIF
       sub   edi, 1
     .ELSE
       add   edi, 1
+      .IF edi >= MAP_SIZE
+        mov eax, 0
+        ret
+      .ENDIF
     .ENDIF
-    mov ecx, [edi]
-    .IF ecx == 1
+    mov ecx, 0
+    mov cl, Game_Map[edi]
+    .IF ecx == '1'
       mov   eax, 1
     .ELSE
       mov   eax, 0

@@ -171,7 +171,7 @@ WinProc PROC,
     .ELSEIF eax == WM_CREATE        ; 创建窗口事件
       INVOKE 	SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
       INVOKE    LoadGameInfo
-      INVOKE    SetTimer, hWnd, 1, 100, NULL
+      INVOKE    SetTimer, hWnd, TIMER_ID, TIMER_INTERVAL, NULL
       jmp    	WinProcExit
     .ELSE                           ; 其他事件
       INVOKE 	DefWindowProc, hWnd, localMsg, wParam, lParam
@@ -399,7 +399,7 @@ PaintMonsters PROC
 ; Returns:  nothing
 ;---------------------------------------------------------
 	mov     eax, OFFSET Game.pEnemyArray
-    mov     ebx, [eax]
+    mov     esi, eax
     mov     ecx, Game.Enemy_Num
     cmp     ecx, 0
     je      PaintMonstersExit
@@ -407,6 +407,7 @@ PaintMonsters PROC
 DrawMonsters:
     push    ecx
     mov     edx, OFFSET monsterHandler
+    mov     ebx, [esi]
     mov     eax, (Enemy PTR [ebx]).Enemy_Type
     .WHILE  eax > 0
       add   edx, TYPE MonsterBitmapInfo
@@ -431,7 +432,7 @@ DrawMonsters:
 			imgDC, 0, 0,
             (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
 			tcolor
-    add     ebx, TYPE Enemy
+    add     esi, TYPE DWORD
     pop     ecx
     loop    DrawMonsters
 	
