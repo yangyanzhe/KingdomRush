@@ -105,6 +105,8 @@ Initialize_Round_Loop:
         mov     eax, ENEMY_MONEY_0
         mov     (Enemy PTR [edi]).Money, eax
 
+        mov     (Enemy PTR [edi]).Gesture, 0
+
         add     pEnemy_type, 4
         add     edi, TYPE Enemy
         loop    Initialize_Round_Enemy_Loop
@@ -369,15 +371,19 @@ EnemyMove PROC USES edi esi ebx eax,
 ;require: 特定怪物的指针
 ;----------------------------------------------------------------------
     mov     edi, pEnemy
+
+    ;变更动作
+    not     (Enemy PTR [edi]).Gesture
+
     mov     ebx, OFFSET Game_Map
-    mov     ecx, (Enemy PTR [edi]).Current_Pos.x
+    mov     ecx, (Enemy PTR [edi]).Current_Pos.y
     cmp     ecx, 0
     je      GETY_Done
 GETY:
     add     ebx, (MAP_WIDTH)
     loop    GETY
 GETY_Done:
-    mov     ecx, (Enemy PTR [edi]).Current_Pos.y
+    mov     ecx, (Enemy PTR [edi]).Current_Pos.x
     cmp     ecx, 0
     je      STEP1
 GETX:
@@ -400,24 +406,24 @@ STEP2:
     mov     e_x, eax
     mov     eax, Game.End_Pos.y
     mov     e_y, eax
-    .IF ecx == 0 || ecx == 3
+    .IF ecx == UP || ecx == DOWN
       mov     eax, e_x
       mov     edx, p_x
       .IF eax < edx
-        mov     choosed_dir, 1
+        mov     choosed_dir, LEFT
       .ELSE
-        mov     choosed_dir, 2
+        mov     choosed_dir, RIGHT
       .ENDIF 
     .ELSE
       mov     eax, e_y
       mov     edx, p_y
       .IF eax < edx
-        mov     choosed_dir, 0
+        mov     choosed_dir, UP
       .ELSE
-        mov     choosed_dir, 3
+        mov     choosed_dir, DOWN
       .ENDIF
     .ENDIF
-    mov edx, choosed_dir
+    mov     edx, choosed_dir
     INVOKE  CheckMovable, ebx, edx
     cmp     eax, 0
     je      STEP3
@@ -438,11 +444,11 @@ STEP4:
     mov     choosed_dir, edx
 EnemyMove_Exit:    
     mov     eax, choosed_dir
-    .IF eax == 0
+    .IF eax == UP
       dec     (Enemy PTR [edi]).Current_Pos.y
-    .ELSEIF eax == 1
+    .ELSEIF eax == LEFT
       dec     (Enemy PTR [edi]).Current_Pos.x
-    .ELSEIF eax == 2
+    .ELSEIF eax == RIGHT
       inc     (Enemy PTR [edi]).Current_Pos.y
     .ELSE
       inc     (Enemy PTR [edi]).Current_Pos.x
@@ -555,11 +561,11 @@ CheckMovable PROC USES edi ebx ecx,
 ;----------------------------------------------------------------------
     mov     edi, pPoint   
     mov     ebx, Dir
-    .IF ebx == 0
+    .IF ebx == UP
       sub   edi, MAP_WIDTH
-    .ELSEIF ebx == 3
+    .ELSEIF ebx == DOWN
       add   edi, MAP_WIDTH
-    .ELSEIF ebx == 1
+    .ELSEIF ebx == LEFT
       sub   edi, 1
     .ELSE
       add   edi, 1
