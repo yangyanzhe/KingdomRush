@@ -171,7 +171,7 @@ WinProc PROC,
     .ELSEIF eax == WM_CREATE        ; 创建窗口事件
       INVOKE 	SendMessage, hWnd, WM_SETICON, ICON_SMALL, hIcon
       INVOKE    LoadGameInfo
-      INVOKE    SetTimer, hWnd, 1, 1000, NULL
+      INVOKE    SetTimer, hWnd, 1, 100, NULL
       jmp    	WinProcExit
     .ELSE                           ; 其他事件
       INVOKE 	DefWindowProc, hWnd, localMsg, wParam, lParam
@@ -186,7 +186,8 @@ TimerProc PROC,
     hWnd: DWORD
     ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
     INVOKE UpdateTimer
-    ;INVOKE UpdateEnemies
+    INVOKE UpdateEnemies
+    INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
 TimerProc ENDP
 
@@ -368,13 +369,14 @@ DrawMonsters:
     .IF     eax > 0
       add   edx, TYPE BitmapInfo
     .ENDIF
-    INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
+    INVOKE  SelectObject, imgDC, monsterHandler.up[0].bHandler;(BitmapInfo PTR [edx]).bHandler
 	INVOKE	TransparentBlt, 
 			memDC, (Enemy PTR [ebx]).Current_Pos.x, (Enemy PTR [ebx]).Current_Pos.y,
-            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
+            35,30,
 			imgDC, 0, 0,
-            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight,  
+            35,30,
 			tcolor
+            ;(BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
     add     ebx, TYPE Enemy
     pop     ecx
     loop    DrawMonsters
