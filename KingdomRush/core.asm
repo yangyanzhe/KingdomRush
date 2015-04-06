@@ -28,9 +28,9 @@ DirectionY      dd 1, 0, 0, 1
 ;----------------------------------------------------------------------     
 UpdateTimer PROC
     inc     Game.Tick
-    mov     eax, Game.Tick
-    call    WriteDec
-    call    Crlf
+    ;mov     eax, Game.Tick
+    ;call    WriteDec
+    ;call    Crlf
     ret
 UpdateTimer ENDP
 
