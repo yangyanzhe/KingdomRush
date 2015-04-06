@@ -10,7 +10,7 @@ window  location <850, 150, 700, 640>
 client  location <0, 0, 700, 600>
 
 ROUND_NUMBER dd 4
-ROUND_TRIGGER_TIME dd 3000, 6000, 9000, 12000
+ROUND_TRIGGER_TIME dd 3, 6000, 9000, 12000
 EACH_ROUND_ENEMY_NUMBER dd 3,4,5,6
 EACH_ROUND_ENEMY_TYPE dd 0,0,0,
                          0,0,0,0,

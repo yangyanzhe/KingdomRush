@@ -225,6 +225,8 @@ WinProc ENDP
 TimerProc PROC,
     hWnd: DWORD
     ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+    INVOKE UpdateTimer
+    ;INVOKE UpdateEnemies
     ret
 TimerProc ENDP
 
