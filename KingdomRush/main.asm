@@ -342,8 +342,6 @@ PaintTowers PROC
 ;-----------------------------------------------------------------------
     ; 画出所有空地
 	INVOKE  SelectObject, imgDC, towerHandler[0].bHandler
-    ;mov     ecx, Game.Tower_Num
-    ;mov     ebx, OFFSET Game.TowerArray
     mov     ecx, blankSet[0].number
     mov     ebx, OFFSET blankSet[0].position
 DrawBlank:
@@ -361,7 +359,34 @@ DrawBlank:
 	loop    DrawBlank
 	
 	; 画出存在的塔
+    mov     ecx, Game.Tower_Num
+    mov     ebx, OFFSET Game.TowerArray
+    cmp     ecx, 0
+    je      PaintTowersExit
+DrawTowers:
+    push    ecx
+    mov     eax, (Tower PTR [ebx]).Tower_Type
+    mov     edx, OFFSET towerHandler
+    .WHILE  eax > 0
+      add   edx, TYPE BitmapInfo
+      dec   eax
+    .ENDW
+    push    edx
+    INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
+    pop     edx
+    mov     eax, (Tower PTR [ebx]).Pos.y
+    sub     eax, (BitmapInfo PTR [edx]).bHeight
+	INVOKE  TransparentBlt, 
+            memDC, (Tower PTR [ebx]).Pos.x, eax,
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight,
+            imgDC, 0, 0, 
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight,
+            tcolor
+	add     ebx, TYPE Tower        
+    pop     ecx
+    loop    DrawTowers
 
+PaintTowersExit:
     ret
 PaintTowers ENDP
 

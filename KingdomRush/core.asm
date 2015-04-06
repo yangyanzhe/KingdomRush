@@ -50,21 +50,21 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
     mov     Game.End_Pos.y, 400
 
 ;初始化所有塔
-    mov     Game.Tower_Num, 2
-    mov     ecx, 2
-    mov     ebx, OFFSET Game.TowerArray
-    mov     esi, 0
-    mov     eax, OFFSET TOWERPOSITION
-Initialize_Tower_Loop:  
-    mov     (Tower PTR [ebx]).Tower_Type, 0     ;塔的初始类型为0（空地）
-    mov     (Tower PTR [ebx]).Range, 100        ;塔的攻击范围
-    mov     edi, [eax]                          ;塔的位置：存在TOWERPOSITION数组中
-    mov     (Tower PTR [ebx]).Pos.x, edi
-    mov     edi, [eax+4] 
-    mov     (Tower PTR [ebx]).Pos.y, edi
-    add     eax, 8
-    add     ebx, TYPE Tower
-    loop    Initialize_Tower_Loop
+    mov     Game.Tower_Num, 0
+    ;mov     ecx, 2
+    ;mov     ebx, OFFSET Game.TowerArray
+    ;mov     esi, 0
+    ;mov     eax, OFFSET TOWERPOSITION
+;Initialize_Tower_Loop:  
+    ;mov     (Tower PTR [ebx]).Tower_Type, 0     ;塔的初始类型为0（空地）
+    ;mov     (Tower PTR [ebx]).Range, 100        ;塔的攻击范围
+    ;mov     edi, [eax]                          ;塔的位置：存在TOWERPOSITION数组中
+    ;mov     (Tower PTR [ebx]).Pos.x, edi
+    ;mov     edi, [eax+4] 
+    ;mov     (Tower PTR [ebx]).Pos.y, edi
+    ;add     eax, 8
+    ;add     ebx, TYPE Tower
+    ;loop    Initialize_Tower_Loop
 
 ;初始化所有轮次信息
     mov     eax, ROUND_NUMBER
