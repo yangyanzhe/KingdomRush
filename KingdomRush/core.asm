@@ -172,7 +172,7 @@ UpdateEnemies PROC
     mov ebx, eax  
     mov eax, (Round PTR [ebx]).Trigger_Tick
     .IF Game.Tick >= eax
-        .IF Game.Now_Round != 0
+        .IF Game.Next_Round != 0
             inc Game.Now_Round
         .ENDIF
         inc Game.Next_Round
@@ -182,6 +182,10 @@ UpdateEnemies PROC
     .ENDIF
 
 Jump1:
+    mov eax, Game.Now_Round
+    .IF eax == 1
+        mov eax, eax
+    .ENDIF
     INVOKE GetRound, Game.Now_Round ;获取本轮句柄
     mov pRound, eax
     mov ebx, eax
@@ -213,6 +217,12 @@ Jump2:
         jmp UpdateEnemiesExit
     .ENDIF
 Loop_EnemyMove:
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
+    INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
@@ -390,7 +400,6 @@ EnemyMove PROC,
 
     ;变更动作
     xor     (Enemy PTR [edi]).Gesture, 1
-    
     mov     ebx, 0
     mov     ecx, (Enemy PTR [edi]).Current_Pos.y
     cmp     ecx, 0
