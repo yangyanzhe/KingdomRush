@@ -30,8 +30,6 @@ towerNum    	= 5
 signNum     	= 5
 monsterNum	 	= 1
 
-clickHandler	ClickInfo <1, 200, 200>	  ; 测试绘制图标的信息
-
 mapHandler      BitmapInfo mapNum DUP(<>)
 blankSet        PositionSet mapNum DUP(<>)
 towerHandler    BitmapInfo towerNum DUP(<>) 
@@ -45,7 +43,7 @@ IDB_MAPONE      EQU 102
 blankIndex      dd 0, 8
 blankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>, 
                       <300, 390>, <420, 390>, <340, 500>, <550, 480>
-SignPosition	Coord <0,0>, <34, 0>, <86,51>, <34, 105>, <-15, 51>
+signPosition	Coord <0, 0>, <34, 0>, <86, 51>, <34, 105>, <-15, 51>
 
 IDB_SIGN        EQU 110
 IDB_CIRCLE		EQU 110

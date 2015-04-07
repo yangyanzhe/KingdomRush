@@ -64,14 +64,10 @@ GameInfo struct
     RoundArray			Round 20 dup(<>)		;游戏所有轮次
     Station_Num         dd ?
     StationArray        Coord 10 dup(<>)
+    ; 记录是否点击以及点击位置
+    IsClicked           dd 0
+    ClickedIndex        dd 0
 GameInfo ends
-
-; 点击信息
-ClickInfo struct
-	flag				dd ?
-	posX				dd ?
-	posY				dd ?
-ClickInfo ends
 
 ; 图片信息
 BitmapInfo struct

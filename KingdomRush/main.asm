@@ -33,7 +33,7 @@ TimerProc PROTO,
 
 LMouseProc PROTO,
 	hWnd: DWORD,
-	cursorPosition: POINTS
+	cursorPosition: Coord
 	
 PaintProc PROTO,
     hWnd: DWORD
@@ -143,7 +143,7 @@ WinProc PROC,
     wParam: DWORD, 
     lParam: DWORD
 ;-----------------------------------------------------
-    LOCAL   cursorPosition: POINTS
+    LOCAL   cursorPosition: Coord
 	LOCAL	ps: PAINTSTRUCT
 
     mov      eax, localMsg
@@ -159,9 +159,11 @@ WinProc PROC,
 	  jmp       WinProcExit
     .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标事件
       mov  	    ebx, lParam
-      mov  	    cursorPosition.x, bx
+      movzx     edx, bx
+      mov     	cursorPosition.x, edx
 	  shr  	    ebx, 16
-	  mov  	    cursorPosition.y, bx
+      movzx     edx, bx
+	  mov     	cursorPosition.y, edx
 	  .IF wParam == MK_LBUTTON
 		INVOKE 	LMouseProc, hWnd, cursorPosition
 	  .ENDIF
@@ -334,7 +336,7 @@ InitMapInfo PROC
     mov     ebx, OFFSET blankSet[0].position
     mov     edx, OFFSET Game.TowerArray
 InitTower:  
-    mov     (Tower PTR [edx]).Tower_Type, 1     ;塔的初始类型为0（空地）
+    mov     (Tower PTR [edx]).Tower_Type, 0     ;塔的初始类型为0（空地）
     mov     (Tower PTR [edx]).Range, 100        ;塔的攻击范围
     mov     eax, (Coord PTR [ebx]).x
     mov     (Tower PTR [edx]).Pos.x, eax
@@ -361,9 +363,48 @@ TimerProc ENDP
 ;-----------------------------------------------------------------------
 LMouseProc PROC,
 	hWnd: DWORD,
-	cursorPosition: POINTS
+	cursorPosition: Coord
 ;-----------------------------------------------------------------------
     ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
+
+    mov     eax, Game.IsClicked
+    .IF eax == 1
+      mov   Game.IsClicked, 0
+    .ELSE
+      mov   ecx, Game.Tower_Num
+      mov   ebx, OFFSET Game.TowerArray
+      mov   esi, 0
+CheckClicked:
+      mov   edx, OFFSET towerHandler
+      mov   eax, (Tower PTR [ebx]).Tower_Type
+      .WHILE eax > 0
+        add edx, TYPE BitmapInfo
+        dec eax
+      .ENDW
+      ; 判断是否点击在空地/塔的范围内
+      mov   eax, (Tower PTR [ebx]).Pos.x
+      cmp   cursorPosition.x, eax
+      jb    CheckClicked0
+      add   eax, (BitmapInfo PTR [edx]).bWidth
+      cmp   cursorPosition.x, eax
+      ja    CheckClicked0
+      mov   eax, (Tower PTR [ebx]).Pos.y
+      cmp   cursorPosition.y, eax
+      ja    CheckClicked0
+      sub   eax, (BitmapInfo PTR [edx]).bHeight
+      cmp   cursorPosition.y, eax
+      jb    CheckClicked0
+
+      mov   Game.IsClicked, 1
+      mov   Game.ClickedIndex, esi
+      jmp   LMouseProcExit
+CheckClicked0:
+      add   ebx, TYPE Tower
+      add   esi, 1
+      loop  CheckClicked
+    .ENDIF
+
+LMouseProcExit:
     ret
 LMouseProc ENDP
 
@@ -473,48 +514,63 @@ PaintMonsters ENDP
 PaintSigns PROC uses eax esi ebx ecx
 ;
 ;---------------------------------------------------------
-	LOCAL x:DWORD				; after calculation, x
-	LOCAL y:DWORD				; after calculation, y
-	LOCAL oriX:DWORD			; original clicked x
-	LOCAL oriY:DWORD			; original clicked y
+	LOCAL   oriX: DWORD         ; 画标志的原点
+    LOCAL   oriY: DWORD         ; 画标志的原点
+    LOCAL   x: DWORD
+    LOCAL   y: DWORD
 
-	mov	eax, clickHandler.flag
-	cmp	eax, 0
-	jz PaintSignsExit
+    cmp     Game.IsClicked, 0
+    je      PaintSignsExit
 
-	; change the click position to the center position, continue...
-	mov		eax, clickHandler.posX
-	mov		oriX, eax
-	mov		eax, clickHandler.posY
-	mov		oriY, eax
+    mov     ebx, OFFSET Game.TowerArray
+    mov     eax, Game.ClickedIndex
+    .WHILE  eax > 0
+      add   ebx, TYPE Tower
+      dec   eax
+    .ENDW
 
-	mov eax, 0
-	mov ecx, signNum
-	mov ebx, OFFSET signHandler
-	mov esi, OFFSET SignPosition
+    ; 调整原点位置
+    mov     eax, (Tower PTR [ebx]).Pos.x
+    mov     oriX, eax
+    mov     eax, (Tower PTR [ebx]).Pos.y
+    mov     oriY, eax
+    mov     eax, towerHandler[0].bWidth
+    shr     eax, 1
+    add     oriX, eax
+    mov     eax, towerHandler[0].bHeight
+    shr     eax, 1
+    sub     oriY, eax
+    mov     eax, signHandler[0].bWidth
+    shr     eax, 1
+    sub     oriX, eax
+	mov     eax, signHandler[0].bHeight
+    shr     eax, 1
+    sub     oriY, eax
+
+	mov     ecx, signNum
+	mov     ebx, OFFSET signHandler
+	mov     edx, OFFSET signPosition
 DrawSigns:
-	mov		eax, oriY					; calculate sign-y
-	add		eax, (Coord PTR [esi]).y
-	mov		y, eax
-
-	mov		eax, oriX					; calculate sign-x
-	add		eax, (Coord PTR [esi]).x
-	mov		x, eax
-
-	push    ecx							; save ecx, eax
-	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
-
-	INVOKE	TransparentBlt, 
+    push    ecx
+    push    edx
+    mov     eax, oriX
+    add     eax, (Coord PTR [edx]).x
+    mov     x, eax
+    mov     eax, oriY
+    add     eax, (Coord PTR [edx]).y
+    mov     y, eax
+    INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+    INVOKE	TransparentBlt, 
 			memDC, x, y,
             (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
 			imgDC, 0, 0,
             (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
 			tcolor
-
-	add		esi, sizeof Coord
-	add		ebx, sizeof BitmapInfo
-	pop		ecx
-	loop	DrawSigns
+    pop     edx
+    add     ebx, TYPE BitmapInfo
+    add     edx, TYPE Coord
+    pop     ecx
+    loop    DrawSigns
 
 PaintSignsExit:
     ret

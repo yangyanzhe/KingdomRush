@@ -113,6 +113,10 @@ Initialize_Round_Loop:
     add     pRound_time, TYPE DWORD
     loop    Initialize_Round_Loop
 
+    ; 初始化点击信息
+    mov     Game.IsClicked, 0
+    mov     Game.ClickedIndex, 0
+
     ret
 LoadGameInfo ENDP
 
