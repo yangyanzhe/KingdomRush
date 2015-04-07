@@ -48,7 +48,19 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
     mov     Game.Start_Pos.y, 0
     mov     Game.End_Pos.x, 699
     mov     Game.End_Pos.y, 400
+    mov     Game.Station_Num, Station_Num
 
+    mov     edx, OFFSET Station
+    mov     ebx, OFFSET Game.StationArray
+    mov     ecx, Station_Num
+LoadStation_Loop:
+    mov     eax, (Coord PTR [edx]).x
+    mov     (Coord PTR [ebx]).x, eax
+    mov     eax, (Coord PTR [edx]).y
+    mov     (Coord PTR [ebx]).y, eax
+    add     ebx, TYPE Coord
+    add     edx, TYPE Coord
+    loop    LoadStation_Loop
 ;初始化所有轮次信息
     mov     eax, ROUND_NUMBER
     mov     Game.Round_Num, eax
@@ -90,7 +102,7 @@ Initialize_Round_Loop:
         mov     (Enemy PTR [edi]).Money, eax
 
         mov     (Enemy PTR [edi]).Gesture, 0
-
+        mov     (Enemy PTR [edi]).Station, 0
         add     pEnemy_type, 4
         add     edi, TYPE Enemy
         loop    Initialize_Round_Enemy_Loop
@@ -380,7 +392,6 @@ EnemyMove PROC,
 ;----------------------------------------------------------------------
     pushad
     mov     edi, pEnemy
-
     ;变更动作
     xor     (Enemy PTR [edi]).Gesture, 1
     mov     ebx, 0
@@ -398,8 +409,11 @@ GETX:
     add     ebx, 1
     loop    GETX
 STEP1:
-    ;check if current direction is movable
     mov     ecx, (Enemy PTR [edi]).Current_Dir
+    mov     choosed_dir, ecx
+    jmp     STEP2
+    ;check if current direction is movable
+
     INVOKE  CheckMovable, ebx, ecx
     cmp     eax, 0
     je      STEP2
@@ -410,10 +424,49 @@ STEP2:
     mov     p_x, eax
     mov     eax, (Enemy PTR [edi]).Current_Pos.y
     mov     p_y, eax
-    mov     eax, Game.End_Pos.x
+
+    INVOKE  GetNextStation, edi
+    mov     edx, eax
+
+    mov     eax, (Coord PTR [edx]).x
     mov     e_x, eax
-    mov     eax, Game.End_Pos.y
+    mov     eax, (Coord PTR [edx]).y
     mov     e_y, eax
+
+    mov     ecx, e_x
+    mov     edx, p_x
+
+    INVOKE CheckMovable, ebx, LEFT
+    .IF ecx < edx && eax == 1
+        mov choosed_dir, LEFT
+        jmp EnemyMove_Exit
+    .ENDIF
+
+     INVOKE CheckMovable, ebx, RIGHT
+    .IF ecx > edx && eax == 1
+        mov choosed_dir, RIGHT
+        jmp EnemyMove_Exit
+    .ENDIF
+
+    mov     ecx, e_y
+    mov     edx, p_y
+
+    INVOKE CheckMovable, ebx, UP
+    .IF ecx < edx && eax == 1
+        mov choosed_dir, UP
+        jmp EnemyMove_Exit
+    .ENDIF
+
+     INVOKE CheckMovable, ebx, DOWN
+    .IF ecx > edx && eax == 1
+        mov choosed_dir, DOWN
+        jmp EnemyMove_Exit
+    .ENDIF
+    add     (Enemy PTR [edi]).Station, 1
+    mov choosed_dir, 4
+    jmp EnemyMove_Exit
+
+
     .IF ecx == UP || ecx == DOWN
       mov     eax, e_x
       mov     edx, p_x
@@ -461,7 +514,7 @@ EnemyMove_Exit:
     .ELSEIF eax == RIGHT
       inc     (Enemy PTR [edi]).Current_Pos.x
       mov     (Enemy PTR [edi]).Current_Dir, RIGHT
-    .ELSE
+    .ELSEIF eax == DOWN
       inc     (Enemy PTR [edi]).Current_Pos.y
       mov     (Enemy PTR [edi]).Current_Dir, DOWN
     .ENDIF
@@ -649,5 +702,29 @@ GetRoundEnemy_Exit:
     mov eax, ebx
     ret
 GetRoundEnemy ENDP
+
+;----------------------------------------------------------------------
+GetNextStation PROC USES ebx ecx edx esi,
+    pEnemy: DWORD
+;获取怪物的下一个移动目标位置
+;require: 怪物句柄
+;return: eax: 坐标句柄
+;----------------------------------------------------------------------
+    mov ebx, pEnemy
+    mov ecx, Game.Station_Num
+    mov edx, OFFSET Game.StationArray
+    mov eax, (Enemy PTR [ebx]).Station
+    mov esi, 0
+GetNexStation_Loop:
+    .IF esi == eax
+        jmp GetNextStation_Exit
+    .ENDIF
+    add edx, TYPE Coord
+    add esi, 1
+    loop GetNexStation_Loop
+GetNextStation_Exit:
+    mov eax, edx
+    ret
+GetNextStation ENDP
 
 END

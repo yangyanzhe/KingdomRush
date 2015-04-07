@@ -18,6 +18,10 @@ APPEAR_INTERVAL = 30
 ENEMY_LIFE_0 = 40
 ENEMY_MONEY_0 = 10
 
+Station_Num = 11
+Station Coord <320, 175>, <291, 233>, <198, 272>,<165, 345>, <194, 413>, 
+              <388, 418>, <491, 418>, <526, 406>,<546, 375>, <577, 340>, <674, 340>
+
 .code
 LoadGameInfo PROTO
 
@@ -55,5 +59,8 @@ SearchAndAttack PROTO,
 LoadGameInfo PROTO
 
 UpdateTimer PROTO
+
+GetNextStation PROTO,
+    pEnemy: DWORD
 
 ENDIF

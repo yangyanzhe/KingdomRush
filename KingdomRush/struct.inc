@@ -31,6 +31,7 @@ Enemy struct
     Current_Life		dd ?
     Money				dd ?
     Gesture             dd ?
+    Station             dd ?
 Enemy ends
 
 ;轮次
@@ -61,6 +62,8 @@ GameInfo struct
     TowerArray			Tower 100 dup(<>)       ;当前所有塔
     pEnemyArray			dd 100 dup(?)		    ;当前所有怪物的指针
     RoundArray			Round 20 dup(<>)		;游戏所有轮次
+    Station_Num         dd ?
+    StationArray        Coord 10 dup(<>)
 GameInfo ends
 
 ; 点击信息
