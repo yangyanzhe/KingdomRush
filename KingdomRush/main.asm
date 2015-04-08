@@ -512,7 +512,9 @@ PaintMonsters ENDP
 
 ;---------------------------------------------------------
 PaintSigns PROC uses eax esi ebx ecx
-;
+;	
+;	Functions: 画出选择塔的标识
+;	Receives:  
 ;---------------------------------------------------------
 	LOCAL   oriX: DWORD         ; 画标志的原点
     LOCAL   oriY: DWORD         ; 画标志的原点
@@ -547,7 +549,13 @@ PaintSigns PROC uses eax esi ebx ecx
     shr     eax, 1
     sub     oriY, eax
 
-	mov     ecx, signNum
+	mov		eax, (Tower PTR [ebx]).Tower_Type
+	.IF		eax == 0
+	    mov		ecx, signNum
+	.ELSE
+		mov		ecx, 1
+	.ENDIF
+	
 	mov     ebx, OFFSET signHandler
 	mov     edx, OFFSET signPosition
 DrawSigns:
