@@ -221,10 +221,7 @@ Loop_EnemyMove:
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
-    INVOKE EnemyMove, [ebx]
-    INVOKE EnemyMove, [ebx]
-    INVOKE EnemyMove, [ebx]
-    INVOKE EnemyMove, [ebx]
+    xor     (Enemy PTR [ebx]).Gesture, 1
     add ebx, TYPE DWORD
     loop Loop_EnemyMove
 
@@ -397,7 +394,6 @@ EnemyMove PROC,
     pushad
     mov     edi, pEnemy
     ;变更动作
-    xor     (Enemy PTR [edi]).Gesture, 1
     mov     ebx, 0
     mov     ecx, (Enemy PTR [edi]).Current_Pos.y
     cmp     ecx, 0
@@ -416,13 +412,6 @@ STEP1:
     mov     ecx, (Enemy PTR [edi]).Current_Dir
     mov     choosed_dir, ecx
     jmp     STEP2
-    ;check if current direction is movable
-
-    INVOKE  CheckMovable, ebx, ecx
-    cmp     eax, 0
-    je      STEP2
-    mov     choosed_dir, ecx
-    jmp     EnemyMove_Exit
 STEP2:
     mov     eax, (Enemy PTR [edi]).Current_Pos.x
     mov     p_x, eax
@@ -437,6 +426,13 @@ STEP2:
     mov     eax, (Coord PTR [edx]).y
     mov     e_y, eax
 
+    .IF ecx == UP || ecx == DOWN
+        jmp LEFT_RIGHT
+    .ELSE
+        jmp UP_DOWN
+    .ENDIF
+
+LEFT_RIGHT:
     mov     ecx, e_x
     mov     edx, p_x
 
@@ -466,47 +462,45 @@ STEP2:
         mov choosed_dir, DOWN
         jmp EnemyMove_Exit
     .ENDIF
-    add     (Enemy PTR [edi]).Station, 1
+    add (Enemy PTR [edi]).Station, 1
     mov choosed_dir, 4
     jmp EnemyMove_Exit
 
+UP_DOWN:
+    mov     ecx, e_y
+    mov     edx, p_y
 
-    .IF ecx == UP || ecx == DOWN
-      mov     eax, e_x
-      mov     edx, p_x
-      .IF eax < edx
-        mov     choosed_dir, LEFT
-      .ELSE
-        mov     choosed_dir, RIGHT
-      .ENDIF 
-    .ELSE
-      mov     eax, e_y
-      mov     edx, p_y
-      .IF eax < edx
-        mov     choosed_dir, UP
-      .ELSE
-        mov     choosed_dir, DOWN
-      .ENDIF
+    INVOKE CheckMovable, ebx, UP
+    .IF ecx < edx && eax == 1
+        mov choosed_dir, UP
+        jmp EnemyMove_Exit
     .ENDIF
-    mov     edx, choosed_dir
-    INVOKE  CheckMovable, ebx, edx
-    cmp     eax, 0
-    je      STEP3
-    jmp     EnemyMove_Exit
-STEP3:
-    mov     eax, edx
-    mov     edx, 3
-    sub     edx, eax
-    mov     choosed_dir, edx
-    INVOKE  CheckMovable, ebx, edx
-    cmp     eax, 0
-    je      STEP4
-    jmp     EnemyMove_Exit
-STEP4:
-    mov     eax, ecx
-    mov     edx, 3
-    sub     edx, eax
-    mov     choosed_dir, edx
+
+     INVOKE CheckMovable, ebx, DOWN
+    .IF ecx > edx && eax == 1
+        mov choosed_dir, DOWN
+        jmp EnemyMove_Exit
+    .ENDIF
+
+    mov     ecx, e_x
+    mov     edx, p_x
+
+    INVOKE CheckMovable, ebx, LEFT
+    .IF ecx < edx && eax == 1
+        mov choosed_dir, LEFT
+        jmp EnemyMove_Exit
+    .ENDIF
+
+     INVOKE CheckMovable, ebx, RIGHT
+    .IF ecx > edx && eax == 1
+        mov choosed_dir, RIGHT
+        jmp EnemyMove_Exit
+    .ENDIF
+
+    add (Enemy PTR [edi]).Station, 1
+    mov choosed_dir, 4
+    jmp EnemyMove_Exit
+
 EnemyMove_Exit:    
     mov     eax, choosed_dir
     .IF eax == UP
