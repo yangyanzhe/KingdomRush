@@ -220,7 +220,6 @@ Loop_EnemyMove:
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
-    INVOKE EnemyMove, [ebx]
     xor     (Enemy PTR [ebx]).Gesture, 1
     add ebx, TYPE DWORD
     loop Loop_EnemyMove
