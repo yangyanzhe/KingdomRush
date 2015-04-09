@@ -29,12 +29,15 @@ mapNum      	= 1
 towerNum    	= 5
 signNum     	= 5
 monsterNum	 	= 1
+attackNum		= 3
+
 
 mapHandler      BitmapInfo mapNum DUP(<>)
 blankSet        PositionSet mapNum DUP(<>)
 towerHandler    BitmapInfo towerNum DUP(<>) 
 signHandler     BitmapInfo signNum DUP(<>)
 monsterHandler  MonsterBitmapInfo monsterNum DUP(<>)
+attackHandler	BitmapInfo attackNum DUP(<>)
 
 IDI_ICON        EQU 101
 IDB_MAP         EQU 102
@@ -45,6 +48,7 @@ blankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>,
                       <300, 390>, <420, 390>, <340, 500>, <550, 480>
 signPosition	Coord <0, 0>, <34, 0>, <86, 51>, <34, 105>, <-15, 51>
 
+; 环上的建塔标志句柄
 IDB_SIGN        EQU 110
 IDB_CIRCLE		EQU 110
 IDB_ARROW_SIGN	EQU 111
@@ -52,15 +56,23 @@ IDB_MAGIC_SIGN	EQU 112
 IDB_SODIER_SIGN EQU 113
 IDB_TURRET_SIGN	EQU 114
 
+; 塔的句柄
 IDB_TOWER       EQU 115
 IDB_BLANK		EQU 115
-IDB_ARROW       EQU 116
-IDB_MAGIC		EQU 117
+IDB_ARROW_TOWER EQU 116
+IDB_MAGIC_TOWER EQU 117
 IDB_SODIER		EQU 118
 IDB_TURRET		EQU 119
 
-IDB_BLANKCLICK  EQU 120
-IDB_PRICE       EQU 121
+; 附属图
+IDB_BLANKCLICK  EQU 120			; 空地点击后的图片
+IDB_PRICE       EQU 121			; 显示塔价格的标牌
+
+; 子弹图
+IDB_ATTACK 		EQU 127
+IDB_ARROW		EQU 127			; 箭
+IDB_MAGIC 		EQU 128
+IDB_BOMB		EQU 129			; 炮弹
 
 ; Monster编号规则：ID+方向+状态
 ; 例如：101表示ID：1，方向：0，状态：1

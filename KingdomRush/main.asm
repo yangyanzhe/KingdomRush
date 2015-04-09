@@ -324,6 +324,26 @@ LoadMonster0:
     pop     ecx
     loop    LoadMonster
 
+    ; 载入子弹图片
+    mov     ecx, attackNum
+    mov     ebx, OFFSET attackHandler
+    mov     edx, IDB_ATTACK
+LoadAttack:
+    push    ecx
+    push    edx
+    INVOKE  LoadBitmap, hInst, edx
+    mov     (BitmapInfo PTR [ebx]).bHandler, eax
+    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
+    mov     eax, bm.bmWidth
+    mov     (BitmapInfo PTR [ebx]).bWidth, eax
+    mov     eax, bm.bmHeight
+    mov     (BitmapInfo PTR [ebx]).bHeight, eax
+    pop     edx
+    pop     ecx
+    add     ebx, TYPE BitmapInfo
+    add     edx, 1
+    loop    LoadAttack
+
 	ret
 InitImages ENDP
 
@@ -584,6 +604,73 @@ PaintSignsExit:
     ret
 PaintSigns ENDP
 
+;--------------------------------------------------
+RotateDC Proc,
+	hDC:DWORD,		; HDC
+	angle:WORD,		; rotate angle
+	centerPt:Coord  ; center point
+;
+;	return eax = nGraphicsMode
+;--------------------------------------------------
+	Local nGraphicsMode:WORD
+	Local fangle:DWORD
+	Local xform:XFORM
+
+    INVOKE SetGraphicsMode, hDc, GM_ADVANCED;  
+	cmp angle, 0
+	je	RotateExit
+
+	mov edx, 0
+	mov eax, angle
+	mov ecx, 180
+	div ecx
+	mov ecx, 3.1415926
+	mul ecx
+	mov fangle, eax
+
+    ;double fangle = (double)iAngle / 180. * 3.1415926;  
+    ;xform.eM11 = (float)cos(fangle);  
+    ;xform.eM12 = (float)sin(fangle);  
+    ;xform.eM21 = (float)-sin(fangle);  
+    ;xform.eM22 = (float)cos(fangle);  
+    ;xform.eDx = (float)(centerPt.x - cos(fangle)*centerPt.x + sin(fangle)*centerPt.y);  
+    ;xform.eDy = (float)(centerPt.y - cos(fangle)*centerPt.y - sin(fangle)*centerPt.x);  
+    ;SetWorldTransform(hDc, &xform);  
+
+	movzx eax, nGraphicsMode
+RotateExit:
+	ret
+
+RotateDC ENDP
+
+
+;---------------------------------------------------
+PaintBombAttack PROC
+;
+;---------------------------------------------------
+	LOCAL   oriX: DWORD         ; 画标志的原点
+    LOCAL   oriY: DWORD         ; 画标志的原点
+    LOCAL   desX: DWORD
+    LOCAL   desY: DWORD
+
+	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+	
+    ;INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+    ;INVOKE	TransparentBlt, 
+	;		memDC, x, y,
+    ;        (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
+	;		imgDC, 0, 0,
+    ;        (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
+	;		tcolor
+    ;pop     edx
+    ;add     ebx, TYPE BitmapInfo
+    ;add     edx, TYPE Coord
+    ;pop     ecx
+    ;loop    DrawSigns
+
+	ret
+PaintBombAttack ENDP
+
 ;-----------------------------------------------------------------------
 PaintProc PROC,
 	hWnd:DWORD
@@ -621,6 +708,7 @@ PaintProc PROC,
 	INVOKE 	PaintMonsters
 
 	; 画子弹
+	;INVOKE  PaintBombAttack
 
 	; 画建塔提示圆圈
 	INVOKE	PaintSigns

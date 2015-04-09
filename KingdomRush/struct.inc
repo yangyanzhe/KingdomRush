@@ -20,6 +20,16 @@ Tower struct
     Pos		            Coord <>
 Tower ends
 
+;  Í¼Æ¬Ðý×ª
+XFORM struct{
+	eM11				dd ?		; cos
+	eM12				dd ?		; sin
+	eM21				dd ?		; negative sin
+	eM22				dd ?		; cos
+	eDx					dd ?		; horizon translation
+	eDy					dd ?		; vertical tranlation
+XFORM ends
+
 ;¹ÖÎï
 Enemy struct 
     Enemy_Type			dd ?
