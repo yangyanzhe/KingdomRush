@@ -27,7 +27,9 @@ tcolor	        dd 0FFFFFFh				; transparent color
 
 mapNum      	= 1
 towerNum    	= 5
-signNum     	= 5
+signNum         = 8
+blankSignNum    = 5
+towerSignNum    = 3
 monsterNum	 	= 1
 bulletNum		= 2
 animateNum    	= 16
@@ -49,24 +51,29 @@ IDB_MAPONE      EQU 102
 blankIndex      dd 0, 8
 blankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>, 
                       <300, 390>, <420, 390>, <340, 500>, <550, 480>
-signPosition	Coord <0, 0>, <34, 0>, <86, 51>, <34, 105>, <-15, 51>
+signPosition	Coord <0, 0>, <34, 0>, <34, 105>, <86, 51>, <-15, 51>
 
 IDB_SIGN        EQU 110
-IDB_CIRCLE		EQU 110
+IDB_BLANKSIGN   EQU 110
+IDB_BLANKCIRCLE	EQU 110
 IDB_ARROW_SIGN	EQU 111
-IDB_MAGIC_SIGN	EQU 112
-IDB_SODIER_SIGN EQU 113
+IDB_SODIER_SIGN EQU 112
+IDB_MAGIC_SIGN	EQU 113
 IDB_TURRET_SIGN	EQU 114
 
-IDB_TOWER       EQU 115
-IDB_BLANK		EQU 115
-IDB_ARROW       EQU 116
-IDB_MAGIC		EQU 117
-IDB_SODIER		EQU 118
-IDB_TURRET		EQU 119
+IDB_TOWERSIGN   EQU 115
+IDB_TOWERCIRCLE EQU 115
+IDB_UPDATE      EQU 116
+IDB_SELL        EQU 117
+IDB_PRICE       EQU 118
 
-IDB_BLANKCLICK  EQU 120
-IDB_PRICE       EQU 121
+IDB_TOWER       EQU 119
+IDB_BLANK		EQU 119
+IDB_ARROW       EQU 120
+IDB_SODIER		EQU 121
+IDB_MAGIC		EQU 122
+IDB_TURRET		EQU 123
+IDB_BLANKCLICK  EQU 124
 
 IDB_BULLET		 EQU 127
 IDB_BULLET_BOMB  EQU 127
