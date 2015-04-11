@@ -385,11 +385,136 @@ LMouseProc PROC,
 	hWnd: DWORD,
 	cursorPosition: Coord
 ;-----------------------------------------------------------------------
+    LOCAL   oriX: DWORD         ; 画标志的原点
+    LOCAL   oriY: DWORD         ; 画标志的原点
     ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
 
     mov     eax, Game.IsClicked
-    .IF eax == 1
-      mov   Game.IsClicked, 0
+    .IF eax == 1                ; Circle已有
+      mov   ebx, OFFSET Game.TowerArray
+      mov   eax, Game.ClickedIndex
+      .WHILE eax > 0
+        add ebx, TYPE Tower
+        dec eax
+      .ENDW
+
+      ; 调整原点位置
+      mov   eax, (Tower PTR [ebx]).Pos.x
+      mov   oriX, eax
+      mov   eax, (Tower PTR [ebx]).Pos.y
+      mov   oriY, eax
+      mov   edx, OFFSET towerHandler
+      mov   eax, (Tower PTR [ebx]).Tower_Type
+      .WHILE eax > 0
+        add edx, TYPE BitmapInfo
+        dec eax
+      .ENDW
+      mov   eax, (BitmapInfo PTR [edx]).bWidth
+      shr   eax, 1
+      add   oriX, eax
+      mov   eax, (BitmapInfo PTR [edx]).bHeight
+      shr   eax, 1
+      sub   oriY, eax
+      mov   eax, signHandler[0].bWidth
+      shr   eax, 1
+      sub   oriX, eax
+	  mov   eax, signHandler[0].bHeight
+      shr   eax, 1
+      sub   oriY, eax
+
+      mov   eax, (Tower PTR [ebx]).Tower_Type
+      .IF eax == 0                  ; Blank Circle已有
+        mov ecx, blankSignNum
+        dec ecx
+        mov edx, OFFSET signHandler
+        add edx, TYPE BitmapInfo
+        mov esi, OFFSET signPosition
+        add esi, TYPE Coord
+        mov edi, 1
+
+CheckSignClicked0:
+        mov  eax, (Coord PTR [esi]).x
+        add  eax, oriX
+        cmp  cursorPosition.x, eax
+        jb   CheckSignClicked1
+        add  eax, (BitmapInfo PTR [edx]).bWidth
+        cmp  cursorPosition.x, eax
+        ja   CheckSignClicked1
+        mov  eax, (Coord PTR [esi]).y
+        add  eax, oriY
+        cmp  cursorPosition.y, eax
+        jb   CheckSignClicked1
+        add  eax, (BitmapInfo PTR [edx]).bHeight
+        cmp  cursorPosition.y, eax
+        ja   CheckSignClicked1
+
+        mov  (Tower PTR [ebx]).Tower_Type, edi
+        jmp  CheckSignClicked2
+CheckSignClicked1:
+        add  edx, TYPE BitmapInfo
+        add  esi, TYPE Coord
+        inc  edi
+        loop CheckSignClicked0
+
+CheckSignClicked2:
+        mov  Game.IsClicked, 0
+        jmp  LMouseProcExit
+
+      .ELSE                         ; Tower Circle已有
+        mov  ecx, towerSignNum
+        dec  ecx
+        mov  edx, OFFSET signHandler
+        mov  eax, blankSignNum
+        .WHILE eax > 0
+          add edx, TYPE BitmapInfo
+          dec eax
+        .ENDW
+        add  edx, TYPE BitmapInfo
+        mov  esi, OFFSET signPosition
+        add  esi, TYPE Coord
+
+        mov  eax, (Coord PTR [esi]).x
+        add  eax, oriX
+        cmp  cursorPosition.x, eax
+        jb   CheckSignClicked3
+        add  eax, (BitmapInfo PTR [edx]).bWidth
+        cmp  cursorPosition.x, eax
+        ja   CheckSignClicked3
+        mov  eax, (Coord PTR [esi]).y
+        add  eax, oriY
+        cmp  cursorPosition.y, eax
+        jb   CheckSignClicked3
+        add  eax, (BitmapInfo PTR [edx]).bHeight
+        cmp  cursorPosition.y, eax
+        ja   CheckSignClicked3
+
+        add  (Tower PTR [ebx]).Tower_Type, 4
+        jmp  CheckSignClicked4
+
+CheckSignClicked3:
+        add  edx, TYPE BitmapInfo
+        add  esi, TYPE Coord
+
+        mov  eax, (Coord PTR [esi]).x
+        add  eax, oriX
+        cmp  cursorPosition.x, eax
+        jb   CheckSignClicked4
+        add  eax, (BitmapInfo PTR [edx]).bWidth
+        cmp  cursorPosition.x, eax
+        ja   CheckSignClicked4
+        mov  eax, (Coord PTR [esi]).y
+        add  eax, oriY
+        cmp  cursorPosition.y, eax
+        jb   CheckSignClicked4
+        add  eax, (BitmapInfo PTR [edx]).bHeight
+        cmp  cursorPosition.y, eax
+        ja   CheckSignClicked4
+
+        mov  (Tower PTR [ebx]).Tower_Type, 0
+CheckSignClicked4:
+        mov  Game.IsClicked, 0
+        jmp  LMouseProcExit
+      .ENDIF
     .ELSE
       mov   ecx, Game.Tower_Num
       mov   ebx, OFFSET Game.TowerArray
@@ -425,6 +550,7 @@ CheckClicked0:
     .ENDIF
 
 LMouseProcExit:
+    INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
 LMouseProc ENDP
 
@@ -577,22 +703,18 @@ PaintSigns PROC uses eax esi ebx ecx
 
 	mov		eax, (Tower PTR [ebx]).Tower_Type
 	.IF eax == 0
-	  mov	ecx, signNum
-	.ELSE
-	  mov	ecx, 1
-	.ENDIF
-	
-	mov     ebx, OFFSET signHandler
-	mov     edx, OFFSET signPosition
-DrawSigns:
-    push    ecx
-    push    edx
-    mov     eax, oriX
-    add     eax, (Coord PTR [edx]).x
-    mov     x, eax
-    mov     eax, oriY
-    add     eax, (Coord PTR [edx]).y
-    mov     y, eax
+	  mov	ecx, blankSignNum
+      mov   ebx, OFFSET signHandler
+	  mov   edx, OFFSET signPosition
+DrawBlankSigns:
+      push  ecx
+      push  edx
+      mov   eax, oriX
+      add   eax, (Coord PTR [edx]).x
+      mov   x, eax
+      mov   eax, oriY
+      add   eax, (Coord PTR [edx]).y
+      mov   y, eax
     INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
     INVOKE	TransparentBlt, 
 			memDC, x, y,
@@ -600,11 +722,42 @@ DrawSigns:
 			imgDC, 0, 0,
             (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
 			tcolor
-    pop     edx
-    add     ebx, TYPE BitmapInfo
-    add     edx, TYPE Coord
-    pop     ecx
-    loop    DrawSigns
+      pop   edx
+      add   ebx, TYPE BitmapInfo
+      add   edx, TYPE Coord
+      pop   ecx
+      loop  DrawBlankSigns
+	.ELSE
+	  mov	ecx, towerSignNum
+      mov   ebx, OFFSET signHandler
+      mov   eax, blankSignNum
+      .WHILE eax > 0
+        add ebx, TYPE signHandler
+        dec eax
+      .ENDW
+	  mov   edx, OFFSET signPosition
+DrawTowerSigns:
+      push  ecx
+      push  edx
+      mov   eax, oriX
+      add   eax, (Coord PTR [edx]).x
+      mov   x, eax
+      mov   eax, oriY
+      add   eax, (Coord PTR [edx]).y
+      mov   y, eax
+    INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+    INVOKE	TransparentBlt, 
+			memDC, x, y,
+            (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
+			imgDC, 0, 0,
+            (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
+			tcolor
+      pop   edx
+      add   ebx, TYPE BitmapInfo
+      add   edx, TYPE Coord
+      pop   ecx
+      loop  DrawTowerSigns
+	.ENDIF
 
 PaintSignsExit:
     ret
