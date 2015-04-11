@@ -187,6 +187,35 @@ WinProcExit:
 WinProc ENDP
 
 ;---------------------------------------------------------
+LoadTypeImages PROC,
+    hInst:DWORD
+;
+; As the load procedure are repeatable, remove the repeatable code here
+; Receives: ecx - num
+;           ebx - handler
+;           edx - IDB_XXX
+;---------------------------------------------------------
+    LOCAL   bm: BITMAP
+ L1:
+    push    ecx
+    push    edx
+    INVOKE  LoadBitmap, hInst, edx
+    mov     (BitmapInfo PTR [ebx]).bHandler, eax
+    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
+    mov     eax, bm.bmWidth
+    mov     (BitmapInfo PTR [ebx]).bWidth, eax
+    mov     eax, bm.bmHeight
+    mov     (BitmapInfo PTR [ebx]).bHeight, eax
+    pop     edx
+    pop     ecx
+    add     ebx, TYPE BitmapInfo
+    add     edx, 1
+    loop    L1
+
+    ret
+LoadTypeImages ENDP
+
+;---------------------------------------------------------
 InitImages PROC,
     hInst:DWORD
 ;
@@ -201,21 +230,7 @@ InitImages PROC,
     mov     ecx, mapNum
     mov     ebx, OFFSET mapHandler
     mov     edx, IDB_MAP
-LoadMap:
-    push    ecx
-    push    edx
-	INVOKE  LoadBitmap, hInst, edx
-    mov     (BitmapInfo PTR [ebx]).bHandler, eax
-    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
-    mov     eax, bm.bmWidth
-    mov     (BitmapInfo PTR [ebx]).bWidth, eax
-    mov     eax, bm.bmHeight
-    mov     (BitmapInfo PTR [ebx]).bHeight, eax
-    pop     edx
-    pop     ecx
-    add     ebx, TYPE BitmapInfo
-    add     edx, 1
-    loop    LoadMap
+    INVOKE  LoadTypeImages, hInst
 
     ; 载入空地位置
     mov     ecx, mapNum
@@ -249,41 +264,13 @@ LoadBlankPosition0:
     mov     ecx, towerNum
     mov     ebx, OFFSET towerHandler
     mov     edx, IDB_TOWER
-LoadTower:
-    push    ecx
-    push    edx
-    INVOKE  LoadBitmap, hInst, edx
-    mov     (BitmapInfo PTR [ebx]).bHandler, eax
-    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
-    mov     eax, bm.bmWidth
-    mov     (BitmapInfo PTR [ebx]).bWidth, eax
-    mov     eax, bm.bmHeight
-    mov     (BitmapInfo PTR [ebx]).bHeight, eax
-    pop     edx
-    pop     ecx
-    add     ebx, TYPE BitmapInfo
-    add     edx, 1
-    loop    LoadTower
+    INVOKE  LoadTypeImages, hInst
 
     ; 载入塔的标志的图片
     mov     ecx, signNum
     mov     ebx, OFFSET signHandler
     mov     edx, IDB_SIGN
-LoadSign:
-    push    ecx
-    push    edx
-    INVOKE  LoadBitmap, hInst, edx
-    mov     (BitmapInfo PTR [ebx]).bHandler, eax
-    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
-    mov     eax, bm.bmWidth
-    mov     (BitmapInfo PTR [ebx]).bWidth, eax
-    mov     eax, bm.bmHeight
-    mov     (BitmapInfo PTR [ebx]).bHeight, eax
-    pop     edx
-    pop     ecx
-    add     ebx, TYPE BitmapInfo
-    add     edx, 1
-    loop    LoadSign
+    INVOKE  LoadTypeImages, hInst
 	
     ; 载入怪物图片
     mov     ecx, monsterNum
@@ -328,21 +315,13 @@ LoadMonster0:
 	mov     ecx, bulletNum
     mov     ebx, OFFSET bulletHandler
     mov     edx, IDB_BULLET
-LoadBullet:
-    push    ecx
-    push    edx
-    INVOKE  LoadBitmap, hInst, edx
-    mov     (BitmapInfo PTR [ebx]).bHandler, eax
-    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
-    mov     eax, bm.bmWidth
-    mov     (BitmapInfo PTR [ebx]).bWidth, eax
-    mov     eax, bm.bmHeight
-    mov     (BitmapInfo PTR [ebx]).bHeight, eax
-    pop     edx
-    pop     ecx
-    add     ebx, TYPE BitmapInfo
-    add     edx, 1
-    loop    LoadBullet
+    INVOKE  LoadTypeImages, hInst
+
+	; 载入动画的图片
+    mov     ecx, animateNum
+    mov     ebx, OFFSET animateHandler
+    mov     edx, IDB_ANIMATE
+    INVOKE  LoadTypeImages, hInst
 
 	ret
 InitImages ENDP
@@ -641,6 +620,49 @@ DrawBullet:
 	ret
 PaintBullets ENDP
 
+;---------------------------------------------------
+PaintAnimates PROC uses ebx eax edx ecx
+;
+;---------------------------------------------------
+	mov		eax, 0
+	mov		ebx, 0
+	; get the struct-Animate
+	mov     ebx, OFFSET testAnimate
+
+	; get the image
+    mov     edx, OFFSET animateHandler
+	push	edx
+	
+	mov		ax, (Animate PTR [ebx]).Animate_Type
+	mov		cx, 8
+	mul		cx
+	add		eax, (Animate PTR [ebx]).Gesture
+	mov		ecx, sizeof BitmapInfo
+	mul		ecx
+
+	pop		edx
+	add		edx, eax
+
+	push edx
+	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
+	pop edx
+	INVOKE	TransparentBlt, 
+			memDC, (Animate PTR [ebx]).Pos.x, (Animate PTR [ebx]).Pos.y,
+			(BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
+			imgDC, 0, 0,
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
+			tcolor
+
+	mov		eax, (Animate PTR [ebx]).Gesture
+	inc		eax
+	.IF		eax > 7
+	mov		eax, 0
+	.ENDIF
+	mov		(Animate PTR [ebx]).Gesture, eax
+
+	ret
+PaintAnimates ENDP
+
 ;-----------------------------------------------------------------------
 PaintProc PROC,
 	hWnd:DWORD
@@ -679,6 +701,9 @@ PaintProc PROC,
 
 	; 画子弹
 	;INVOKE  PaintBullets
+
+	; 画动画
+	INVOKE	PaintAnimates
 
 	; 画建塔提示圆圈
 	INVOKE	PaintSigns

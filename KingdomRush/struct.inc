@@ -52,6 +52,12 @@ Bullet struct
     Gesture             dd ?
 Bullet ends
 
+Animate struct
+	Animate_Type		dw ?
+	Pos					Coord <>
+	Gesture				dd ?
+Animate ends
+
 ;游戏信息
 GameInfo struct
     Tick                dd ?                    ;游戏计时器
