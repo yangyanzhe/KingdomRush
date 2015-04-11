@@ -592,36 +592,45 @@ PaintSignsExit:
 PaintSigns ENDP
 
 ;---------------------------------------------------
-PaintBullets PROC uses ebx eax ecx
+PaintBullets PROC uses eax ebx ecx edx
 ;
 ;---------------------------------------------------
-	LOCAL   x: DWORD         ; 画标志的原点
-    LOCAL   y: DWORD         ; 画标志的原点
+	LOCAL   count:DWORD
 
 	mov		ecx, Game.Bullet_Num
-	mov     ebx, OFFSET Game.BulletArray
+	cmp		ecx, 0
+	je		DrawBulletExit
+
+	mov     edx, OFFSET Game.BulletArray
+	push	edx
 
 DrawBullet:
-    mov     edx, OFFSET bulletHandler
-	mov		eax, (Bullet PTR [ebx]).Bullet_Type
-	add		edx, eax
-    push    edx
-	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
-	pop     edx
+	; get the image
+	mov		count, ecx
+    mov     ebx, OFFSET bulletHandler
+	mov		eax, (Bullet PTR [edx]).Bullet_Type
+	mov		ecx, type BitmapInfo
+	mul		ecx
+	add		ebx, eax
+
+	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+	pop		edx
     INVOKE	TransparentBlt, 
-			memDC, x, y,
-            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
+			memDC, (Bullet PTR [edx]).Pos.x, (Bullet PTR [edx]).Pos.y,
+            (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
 			imgDC, 0, 0,
-            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
+            (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
 			tcolor
 	add		ebx, sizeof Bullet
+	mov		ecx, count
 	loop	DrawBullet
 
+DrawBulletExit:
 	ret
 PaintBullets ENDP
 
 ;---------------------------------------------------
-PaintAnimates PROC uses ebx eax edx ecx
+PaintAnimates PROC uses eax ebx ecx edx 
 ;
 ;---------------------------------------------------
 	mov		eax, 0
@@ -637,7 +646,7 @@ PaintAnimates PROC uses ebx eax edx ecx
 	mov		cx, 8
 	mul		cx
 	add		eax, (Animate PTR [ebx]).Gesture
-	mov		ecx, sizeof BitmapInfo
+	mov		ecx, type BitmapInfo
 	mul		ecx
 
 	pop		edx
@@ -700,7 +709,7 @@ PaintProc PROC,
 	INVOKE 	PaintMonsters
 
 	; 画子弹
-	;INVOKE  PaintBullets
+	INVOKE  PaintBullets
 
 	; 画动画
 	INVOKE	PaintAnimates
