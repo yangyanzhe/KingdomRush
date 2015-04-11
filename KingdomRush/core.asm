@@ -28,6 +28,10 @@ DirectionY      dd 1, 0, 0, 1
 ;----------------------------------------------------------------------     
 UpdateTimer PROC
     inc     Game.Tick
+    inc     Game.TowerTick
+    .IF Game.TowerTick == 10
+        mov Game.TowerTick, 0
+    .ENDIF
     ;mov     eax, Game.Tick
     ;call    WriteDec
     ;call    Crlf
@@ -235,13 +239,43 @@ UpdateTowers PROC
 ;---------------------------------------------------------------------- 
     ;所有塔进行攻击
     pushad
+    mov eax, Game.TowerTick
+    .IF eax != 0
+        jmp UpdateTowersExit
+    .ENDIF
     mov ebx, OFFSET Game.TowerArray
+    mov ecx, Game.Tower_Num
+    .IF ecx == 0
+        jmp UpdateTowersExit
+    .ENDIF
 Loop_TowerAttack:
     INVOKE SearchAndAttack, ebx
     add ebx, TYPE Tower
+    loop Loop_TowerAttack
+UpdateTowersExit:
     popad
     ret
 UpdateTowers ENDP
+
+;----------------------------------------------------------------------   
+UpdateBullets PROC
+; 更新所有子弹的信息
+;---------------------------------------------------------------------- 
+    ;所有子弹进行移动
+    pushad
+    mov ebx, OFFSET Game.BulletArray
+    mov ecx, Game.Bullet_Num
+    .IF ecx == 0
+        jmp UpdateBulletsExit
+    .ENDIF
+Loop_BulletMove:
+    INVOKE BulletMove, ebx
+    add ebx, TYPE Bullet
+    loop Loop_BulletMove
+UpdateBulletsExit:
+    popad
+    ret
+UpdateBullets ENDP
 
 ;==========================     Tower     =============================
 ;----------------------------------------------------------------------   
@@ -291,55 +325,186 @@ UpDegreeTower PROC USES esi,
 UpDegreeTower ENDP
 
 ;----------------------------------------------------------------------   
-SearchAndAttack PROC USES eax ebx ecx esi edi edx,
+SearchAndAttack PROC,
     pTower: DWORD
 ;
 ;搜索并攻击目标
 ; require: 特定塔的指针
 ;----------------------------------------------------------------------
-    mov     esi, pTower
-    mov     ecx, Game.Enemy_Num
-
-    mov     edi, OFFSET Game.pEnemyArray
+    pushad
+    mov esi, pTower
+    mov ecx, Game.Enemy_Num
+    .IF ecx == 0
+        jmp SearchEnemy_Exit
+    .ENDIF
+    mov edi, OFFSET Game.pEnemyArray
 Search_Enemy_Loop:
-    mov     ebx, [edi]
-    mov     edx, (Enemy PTR [ebx]).Current_Pos.x
-    mov     eax, (Tower PTR [esi]).Pos.x
-    .IF     eax < edx
-        xchg  eax, edx
+    mov ebx, [edi]
+    mov edx, (Enemy PTR [ebx]).Current_Pos.x
+    mov eax, (Tower PTR [esi]).Pos.x
+    .IF eax < edx
+        xchg eax, edx
     .ENDIF
-    sub     eax, edx
-    mov     edx, (Tower PTR [esi]).Range
-    .IF     eax > edx
-        jmp   SearchEnemy_Continue
+    sub eax, edx
+    mov edx, (Tower PTR [esi]).Range
+    .IF eax > edx
+        jmp SearchEnemy_Continue
     .ENDIF
 
-    mov     edx, (Enemy PTR [ebx]).Current_Pos.y
-    mov     eax, (Tower PTR [esi]).Pos.y
-    .IF     eax < edx
-        xchg  eax, edx
+    mov edx, (Enemy PTR [ebx]).Current_Pos.y
+    mov eax, (Tower PTR [esi]).Pos.y
+    .IF eax < edx
+        xchg eax, edx
     .ENDIF
-    sub     eax, edx
-    mov     edx, (Tower PTR [esi]).Range
-    .IF     eax > edx
-        jmp   SearchEnemy_Continue
+    sub eax, edx
+    mov edx, (Tower PTR [esi]).Range
+    .IF eax > edx
+        jmp SearchEnemy_Continue
     .ENDIF
 
     ; 找到第一个可以进行攻击的怪物，攻击并退出过程
-    mov     edx, (Tower PTR [esi]).Attack
-    mov     eax, (Enemy PTR [ebx]).Current_Life
-    .IF     eax < edx
-        mov   (Enemy PTR [ebx]).Current_Life, 0
-    .ELSE
-        sub   (Enemy PTR [ebx]).Current_Life, edx
-    .ENDIF
-    jmp     SearchEnemy_Exit
+    ;mov edx, (Tower PTR [esi]).Attack
+    ;mov eax, (Enemy PTR [ebx]).Current_Life
+    ;.IF eax < edx
+    ;    mov (Enemy PTR [ebx]).Current_Life, 0
+    ;.ELSE
+    ;    sub (Enemy PTR [ebx]).Current_Life, edx
+    ;.ENDIF
+
+    ;找到目标，产生子弹
+    INVOKE CreateBullet, esi, ebx
+    jmp SearchEnemy_Exit
 SearchEnemy_Continue:
-    mov     edi, TYPE DWORD
-    loop    Search_Enemy_Loop
+    mov edi, TYPE DWORD
+    loop Search_Enemy_Loop
 SearchEnemy_Exit:
+    popad
     ret
 SearchAndAttack ENDP
+
+;==========================     Bullet     ============================
+;----------------------------------------------------------------------
+CreateBullet PROC,
+    pTower: DWORD,
+    pEnemy: DWORD
+;生成一颗子弹
+;require: 塔的指针， 怪物的指针
+;----------------------------------------------------------------------
+    pushad
+    mov esi, pTower
+    mov edi, pEnemy
+    mov ebx, OFFSET Game.BulletArray
+    mov edx, 0
+FindBulletPosition:
+    .IF edx == Game.Bullet_Num
+        jmp InsertBullet
+    .ENDIF
+    add ebx, TYPE Bullet
+    loop FindBulletPosition
+InsertBullet:
+    inc Game.Bullet_Num
+    mov eax, (Tower PTR [esi]).Tower_Type
+    mov (Bullet PTR [ebx]).Bullet_Type, eax
+    mov eax, (Tower PTR [esi]).Pos.x
+    mov (Bullet PTR [ebx]).Pos.x, eax
+    mov eax, (Tower PTR [esi]).Pos.y
+    mov (Bullet PTR [ebx]).Pos.y, eax
+    mov (Bullet PTR [ebx]).Target, edi
+    mov (Bullet PTR [ebx]).Gesture, 0
+    popad
+    ret
+CreateBullet ENDP 
+
+;----------------------------------------------------------------------
+BulletMove PROC,
+    pBullet: DWORD
+         LOCAL c_x: DWORD,  
+              c_y: DWORD,
+              e_x: DWORD,
+              e_y: DWORD
+;移动一颗子弹
+;require: 子弹的指针
+;----------------------------------------------------------------------
+    pushad
+    mov esi, pBullet
+    mov edi, (Bullet PTR [esi]).Target
+    mov eax, (Enemy PTR [edi]).Current_Pos.x 
+    mov e_x, eax
+    mov eax, (Enemy PTR [edi]).Current_Pos.y
+    mov e_y, eax
+    mov eax, (Bullet PTR [esi]).Pos.x 
+    mov c_x, eax
+    mov eax, (Bullet PTR [esi]).Pos.y
+    mov c_y, eax
+    
+    mov eax, c_x
+    mov edx, e_x
+    .IF eax < edx
+        inc c_x
+    .ELSEIF eax > edx
+        dec c_x
+    .ENDIF
+
+    mov eax, c_y
+    mov edx, e_y
+    .IF eax < edx
+        inc c_y
+    .ELSEIF eax > edx
+        dec c_y
+    .ENDIF
+
+    mov eax, c_x
+    mov (Bullet PTR [esi]).Pos.x, eax
+    mov eax, c_y
+    mov (Bullet PTR [esi]).Pos.y, eax
+    popad
+    ret
+BulletMove ENDP
+
+DeleteBullet PROC,
+    _BulletNumber: DWORD
+;删除一颗子弹
+;require: 子弹的编号
+;----------------------------------------------------------------------
+    pushad
+    mov ebx, OFFSET Game.BulletArray
+    mov ecx, _BulletNumber
+    mov eax, 0
+FindDeletedBullet:
+    .IF eax == ecx
+        jmp BulletFound
+    .ENDIF
+    inc eax
+    add ebx, TYPE Bullet
+    jmp FindDeletedBullet
+BulletFound:
+    mov ecx, Game.Bullet_Num
+    dec ecx
+MoveBulletArray:
+    .IF eax == ecx
+        jmp DeleteBulletExit
+    .ENDIF
+    mov esi, ebx
+    add esi, TYPE Bullet
+    push eax
+    mov eax, (Bullet PTR [esi]).Bullet_Type
+    mov (Bullet PTR [ebx]).Bullet_Type, eax
+    mov eax, (Bullet PTR [esi]).Pos.x
+    mov (Bullet PTR [ebx]).Pos.x, eax
+    mov eax, (Bullet PTR [esi]).Pos.y
+    mov (Bullet PTR [ebx]).Pos.y, eax
+    mov eax, (Bullet PTR [esi]).Gesture
+    mov (Bullet PTR [ebx]).Gesture, eax
+    mov eax, (Bullet PTR [esi]).Target
+    mov (Bullet PTR [ebx]).Target, eax
+    pop eax
+    inc eax
+    jmp MoveBulletArray
+DeleteBulletExit:
+    dec Game.Bullet_Num
+    popad
+    ret
+DeleteBullet ENDP
 
 ;==========================     Enemy     =============================
 ;----------------------------------------------------------------------   
