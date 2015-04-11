@@ -422,6 +422,9 @@ FindBulletPosition:
 InsertBullet:
     inc Game.Bullet_Num
     mov eax, (Tower PTR [esi]).Tower_Type
+    .IF eax == 0
+      mov eax, eax
+    .ENDIF
     mov (Bullet PTR [ebx]).Bullet_Type, eax
     mov eax, (Tower PTR [esi]).Pos.x
     mov (Bullet PTR [ebx]).Pos.x, eax
@@ -758,12 +761,16 @@ DeleteEnemy PROC USES ebx edi ecx eax,
     sub     edi, ecx
     mov     ecx, edi
     sub     ecx, 1
+    .IF ecx == 0
+        jmp DeleteEnemyExit
+    .ENDIF
 EnemyQueueMoveForward:
     mov     edi, [ebx+4]
     mov     [ebx], edi
     add     ebx, 4
     loop    EnemyQueueMoveForward
     dec     Game.Enemy_Num
+DeleteEnemyExit:
     ret
 DeleteEnemy ENDP
 
