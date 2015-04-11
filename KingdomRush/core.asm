@@ -207,14 +207,8 @@ Jump1:
     mov edx, (Round PTR [ebx]).Tick
     .IF edx == eax
         mov (Round PTR [ebx]).Tick, 0
-        .IF Game.Enemy_Num == 11
-            mov eax, eax
-        .ENDIF
         INVOKE GetRoundEnemy, ebx, (Round PTR [ebx]).Now_Enemy
         INVOKE ActivateEnemy, eax
-        .IF Game.Enemy_Num == 12
-            mov eax, eax
-        .ENDIF
         inc (Round PTR [ebx]).Now_Enemy
     .ENDIF
 
@@ -225,19 +219,26 @@ Jump2:
     .IF ecx == 0
         jmp UpdateEnemiesExit
     .ENDIF
+
+    mov edx, 0
 Loop_EnemyMove:
-    .IF ecx == 1
-        mov ecx, ecx
-    .ENDIF
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     push eax
     mov eax, [ebx]
-    xor     (Enemy PTR [eax]).Gesture, 1
+    xor (Enemy PTR [eax]).Gesture, 1
+    mov esi, (Enemy PTR [eax]).Station
+    mov edi, Game.Station_Num
+    .IF esi == edi
+        INVOKE DeleteEnemy, edx
+        sub ebx, TYPE DWORD
+        dec edx
+    .ENDIF
     pop eax
     add ebx, TYPE DWORD
+    inc edx
     loop Loop_EnemyMove
 
 UpdateEnemiesExit:
@@ -646,7 +647,11 @@ LEFT_RIGHT:
         mov choosed_dir, DOWN
         jmp EnemyMove_Exit
     .ENDIF
-    add (Enemy PTR [edi]).Station, 1
+    mov eax, (Enemy PTR [edi]).Station
+    mov edx, Game.Station_Num
+    .IF eax < edx
+        add (Enemy PTR [edi]).Station, 1
+    .ENDIF
     mov choosed_dir, 4
     jmp EnemyMove_Exit
 
@@ -681,7 +686,11 @@ UP_DOWN:
         jmp EnemyMove_Exit
     .ENDIF
 
-    add (Enemy PTR [edi]).Station, 1
+    mov eax, (Enemy PTR [edi]).Station
+    mov edx, Game.Station_Num
+    .IF eax < edx
+        add (Enemy PTR [edi]).Station, 1
+    .ENDIF
     mov choosed_dir, 4
     jmp EnemyMove_Exit
 
@@ -700,6 +709,8 @@ EnemyMove_Exit:
       inc     (Enemy PTR [edi]).Current_Pos.y
       mov     (Enemy PTR [edi]).Current_Dir, DOWN
     .ENDIF
+    mov eax, (Enemy PTR [edi]).Station
+    mov ebx, Game.Station_Num
     popad
     ret
 EnemyMove ENDP
@@ -718,7 +729,7 @@ CheckAllDie:
     mov     edi, [ebx]
     mov     edx, (Enemy PTR [edi]).Current_Life
     .IF edx == 0
-        INVOKE EnemyDie, eax
+        INVOKE DeleteEnemy, eax
     .ENDIF
     add     ebx, TYPE DWORD
     loop    CheckAllDie
@@ -727,7 +738,7 @@ EnemyCheckDie_Exit:
 EnemyCheckDie ENDP
 
 ;----------------------------------------------------------------------   
-EnemyDie PROC USES ebx edi ecx eax,
+DeleteEnemy PROC USES ebx edi ecx eax,
     _EnemyNumber: DWORD
 ;
 ;怪物死亡，将怪物从队列中删除
@@ -747,8 +758,9 @@ EnemyQueueMoveForward:
     mov     [ebx], edi
     add     ebx, 4
     loop    EnemyQueueMoveForward
+    dec     Game.Enemy_Num
     ret
-EnemyDie ENDP
+DeleteEnemy ENDP
 
 ;=========================== player ==================================
 ;----------------------------------------------------------------------     

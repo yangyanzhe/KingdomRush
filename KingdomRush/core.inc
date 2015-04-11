@@ -18,9 +18,10 @@ APPEAR_INTERVAL = 30
 ENEMY_LIFE_0 = 40
 ENEMY_MONEY_0 = 10
 
-Station_Num = 11
-Station Coord <320, 175>, <291, 215>, <193, 233>,<165, 345>, <194, 398>, 
-              <388, 407>, <491, 418>, <526, 406>,<546, 375>, <577, 340>, <674, 340>
+Station_Num = 12
+Station Coord <320, 175>, <291, 215>, <193, 233>, <165, 345>, <194, 398>, 
+              <388, 407>, <491, 418>, <526, 406>, <546, 375>, <577, 340>, <674, 340>, <699, 340>,
+              <699, 340>, <699, 340>, <699, 340>, <699, 340>
 
 .code
 LoadGameInfo PROTO
@@ -52,6 +53,9 @@ EnemyMove PROTO,
     pEnemy: DWORD
 
 EnemyCheckDie PROTO
+
+DeleteEnemy PROTO,
+    _EnemyNumber: DWORD
 
 SearchAndAttack PROTO,
     pTower: DWORD
