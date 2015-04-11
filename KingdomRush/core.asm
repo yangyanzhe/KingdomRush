@@ -29,7 +29,7 @@ DirectionY      dd 1, 0, 0, 1
 UpdateTimer PROC
     inc     Game.Tick
     inc     Game.TowerTick
-    .IF Game.TowerTick == 10
+    .IF Game.TowerTick == 100
         mov Game.TowerTick, 0
     .ENDIF
     ;mov     eax, Game.Tick
@@ -52,6 +52,7 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
     mov     Game.Start_Pos.y, 0
     mov     Game.End_Pos.x, 699
     mov     Game.End_Pos.y, 400
+    mov     Game.Bullet_Num, 0
     mov     Game.Station_Num, Station_Num
 
     mov     edx, OFFSET Station
@@ -254,7 +255,7 @@ UpdateTowers PROC
     pushad
     mov eax, Game.TowerTick
     .IF eax != 0
-        jmp UpdateTowersExit
+        jmp UpdateTowersExit 
     .ENDIF
     mov ebx, OFFSET Game.TowerArray
     mov ecx, Game.Tower_Num
@@ -278,6 +279,9 @@ UpdateBullets PROC
     pushad
     mov ebx, OFFSET Game.BulletArray
     mov ecx, Game.Bullet_Num
+    .IF ecx == 8
+     mov ecx, ecx
+    .ENDIF
     .IF ecx == 0
         jmp UpdateBulletsExit
     .ENDIF
@@ -388,7 +392,7 @@ Search_Enemy_Loop:
     INVOKE CreateBullet, esi, ebx
     jmp SearchEnemy_Exit
 SearchEnemy_Continue:
-    mov edi, TYPE DWORD
+    add edi, TYPE DWORD
     loop Search_Enemy_Loop
 SearchEnemy_Exit:
     popad
@@ -413,7 +417,8 @@ FindBulletPosition:
         jmp InsertBullet
     .ENDIF
     add ebx, TYPE Bullet
-    loop FindBulletPosition
+    add edx, 1
+    jmp FindBulletPosition
 InsertBullet:
     inc Game.Bullet_Num
     mov eax, (Tower PTR [esi]).Tower_Type

@@ -376,6 +376,8 @@ TimerProc PROC,
     ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
     INVOKE UpdateTimer
     INVOKE UpdateEnemies
+    INVOKE UpdateTowers
+    INVOKE UpdateBullets
     INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
 TimerProc ENDP
@@ -624,8 +626,10 @@ DrawBullet:
     mov     edx, OFFSET bulletHandler
 	mov		eax, (Bullet PTR [ebx]).Bullet_Type
 	add		edx, eax
+    push    edx
 	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
-	INVOKE	TransparentBlt, 
+	pop     edx
+    INVOKE	TransparentBlt, 
 			memDC, x, y,
             (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
 			imgDC, 0, 0,

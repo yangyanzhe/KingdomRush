@@ -39,6 +39,8 @@ UpdateEnemies PROTO
 
 UpdateTowers PROTO
 
+UpdateBullets PROTO
+
 GetRound PROTO,
     _RoundNumber:DWORD
 
@@ -73,4 +75,5 @@ CreateBullet PROTO,
 
 BulletMove PROTO,
     pBullet: DWORD
+
 ENDIF
