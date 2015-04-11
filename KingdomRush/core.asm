@@ -186,7 +186,7 @@ UpdateEnemies PROC
 
 Jump1:
     mov eax, Game.Now_Round
-    .IF eax == 1
+    .IF eax == 2
         mov eax, eax
     .ENDIF
     INVOKE GetRound, Game.Now_Round ;获取本轮句柄
@@ -207,8 +207,14 @@ Jump1:
     mov edx, (Round PTR [ebx]).Tick
     .IF edx == eax
         mov (Round PTR [ebx]).Tick, 0
+        .IF Game.Enemy_Num == 11
+            mov eax, eax
+        .ENDIF
         INVOKE GetRoundEnemy, ebx, (Round PTR [ebx]).Now_Enemy
         INVOKE ActivateEnemy, eax
+        .IF Game.Enemy_Num == 12
+            mov eax, eax
+        .ENDIF
         inc (Round PTR [ebx]).Now_Enemy
     .ENDIF
 
@@ -220,11 +226,17 @@ Jump2:
         jmp UpdateEnemiesExit
     .ENDIF
 Loop_EnemyMove:
+    .IF ecx == 1
+        mov ecx, ecx
+    .ENDIF
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
-    xor     (Enemy PTR [ebx]).Gesture, 1
+    push eax
+    mov eax, [ebx]
+    xor     (Enemy PTR [eax]).Gesture, 1
+    pop eax
     add ebx, TYPE DWORD
     loop Loop_EnemyMove
 
@@ -508,19 +520,26 @@ DeleteBullet ENDP
 
 ;==========================     Enemy     =============================
 ;----------------------------------------------------------------------   
-ActivateEnemy PROC USES esi ecx ebx,
+ActivateEnemy PROC,
     pEnemy: DWORD
 ;使怪物进入地图，开始移动。
 ;require: 特定怪物的指针
 ;----------------------------------------------------------------------
     ;将特定怪物指针加入当前游戏怪物指针队列中
+    pushad
     mov     esi, OFFSET Game.pEnemyArray
     inc     Game.Enemy_Num
     mov     ecx, Game.Enemy_Num
     dec     ecx
     mov     ebx, pEnemy
     mov     [esi + ecx * TYPE DWORD], ebx
-
+    .IF ecx == 11
+        mov ecx, ecx
+    .ENDIF
+    mov     eax, esi
+    mov     ebx, ecx
+    shl     ebx, 2
+    add     eax, ebx
     ;初始化怪物的初始、当前、终点位置
     mov     esi, pEnemy
     mov     ecx, Game.Start_Pos.x
@@ -536,6 +555,7 @@ ActivateEnemy PROC USES esi ecx ebx,
     ;初始化怪物朝向：向下
     mov     ecx, DOWN
     mov     (Enemy PTR [esi]).Current_Dir, ecx
+    popad
     ret
 ActivateEnemy ENDP
 
