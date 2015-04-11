@@ -336,7 +336,7 @@ InitMapInfo PROC
     mov     ebx, OFFSET blankSet[0].position
     mov     edx, OFFSET Game.TowerArray
 InitTower:  
-    mov     (Tower PTR [edx]).Tower_Type, 0     ;塔的初始类型为0（空地）
+    mov     (Tower PTR [edx]).Tower_Type, 1     ;塔的初始类型为0（空地）
     mov     (Tower PTR [edx]).Range, 100        ;塔的攻击范围
     mov     eax, (Coord PTR [ebx]).x
     mov     (Tower PTR [edx]).Pos.x, eax
@@ -536,10 +536,16 @@ PaintSigns PROC uses eax esi ebx ecx
     mov     oriX, eax
     mov     eax, (Tower PTR [ebx]).Pos.y
     mov     oriY, eax
-    mov     eax, towerHandler[0].bWidth
+    mov     edx, OFFSET towerHandler
+    mov     eax, (Tower PTR [ebx]).Tower_Type
+    .WHILE  eax > 0
+      add   edx, TYPE BitmapInfo
+      dec   eax
+    .ENDW
+    mov     eax, (BitmapInfo PTR [edx]).bWidth
     shr     eax, 1
     add     oriX, eax
-    mov     eax, towerHandler[0].bHeight
+    mov     eax, (BitmapInfo PTR [edx]).bHeight
     shr     eax, 1
     sub     oriY, eax
     mov     eax, signHandler[0].bWidth
@@ -550,10 +556,10 @@ PaintSigns PROC uses eax esi ebx ecx
     sub     oriY, eax
 
 	mov		eax, (Tower PTR [ebx]).Tower_Type
-	.IF		eax == 0
-	    mov		ecx, signNum
+	.IF eax == 0
+	  mov	ecx, signNum
 	.ELSE
-		mov		ecx, 1
+	  mov	ecx, 1
 	.ENDIF
 	
 	mov     ebx, OFFSET signHandler
