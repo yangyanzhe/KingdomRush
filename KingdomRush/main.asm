@@ -862,7 +862,7 @@ PaintProc PROC,
 	INVOKE 	PaintMonsters
 
 	; »­×Óµ¯
-	INVOKE  PaintBullets
+	;INVOKE  PaintBullets
 
 	; »­¶¯»­
 	INVOKE	PaintAnimates
