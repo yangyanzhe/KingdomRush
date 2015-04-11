@@ -29,7 +29,7 @@ DirectionY      dd 1, 0, 0, 1
 UpdateTimer PROC
     inc     Game.Tick
     inc     Game.TowerTick
-    .IF Game.TowerTick == 10
+    .IF Game.TowerTick == 100
         mov Game.TowerTick, 0
     .ENDIF
     ;mov     eax, Game.Tick
@@ -52,6 +52,7 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
     mov     Game.Start_Pos.y, 0
     mov     Game.End_Pos.x, 699
     mov     Game.End_Pos.y, 400
+    mov     Game.Bullet_Num, 0
     mov     Game.Station_Num, Station_Num
 
     mov     edx, OFFSET Station
@@ -186,7 +187,7 @@ UpdateEnemies PROC
 
 Jump1:
     mov eax, Game.Now_Round
-    .IF eax == 1
+    .IF eax == 2
         mov eax, eax
     .ENDIF
     INVOKE GetRound, Game.Now_Round ;获取本轮句柄
@@ -219,13 +220,26 @@ Jump2:
     .IF ecx == 0
         jmp UpdateEnemiesExit
     .ENDIF
+
+    mov edx, 0
 Loop_EnemyMove:
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
     INVOKE EnemyMove, [ebx]
-    xor     (Enemy PTR [ebx]).Gesture, 1
+    push eax
+    mov eax, [ebx]
+    xor (Enemy PTR [eax]).Gesture, 1
+    mov esi, (Enemy PTR [eax]).Station
+    mov edi, Game.Station_Num
+    .IF esi == edi
+        INVOKE DeleteEnemy, edx
+        sub ebx, TYPE DWORD
+        dec edx
+    .ENDIF
+    pop eax
     add ebx, TYPE DWORD
+    inc edx
     loop Loop_EnemyMove
 
 UpdateEnemiesExit:
@@ -241,7 +255,7 @@ UpdateTowers PROC
     pushad
     mov eax, Game.TowerTick
     .IF eax != 0
-        jmp UpdateTowersExit
+        jmp UpdateTowersExit 
     .ENDIF
     mov ebx, OFFSET Game.TowerArray
     mov ecx, Game.Tower_Num
@@ -265,6 +279,9 @@ UpdateBullets PROC
     pushad
     mov ebx, OFFSET Game.BulletArray
     mov ecx, Game.Bullet_Num
+    .IF ecx == 8
+     mov ecx, ecx
+    .ENDIF
     .IF ecx == 0
         jmp UpdateBulletsExit
     .ENDIF
@@ -375,7 +392,7 @@ Search_Enemy_Loop:
     INVOKE CreateBullet, esi, ebx
     jmp SearchEnemy_Exit
 SearchEnemy_Continue:
-    mov edi, TYPE DWORD
+    add edi, TYPE DWORD
     loop Search_Enemy_Loop
 SearchEnemy_Exit:
     popad
@@ -400,7 +417,8 @@ FindBulletPosition:
         jmp InsertBullet
     .ENDIF
     add ebx, TYPE Bullet
-    loop FindBulletPosition
+    add edx, 1
+    jmp FindBulletPosition
 InsertBullet:
     inc Game.Bullet_Num
     mov eax, (Tower PTR [esi]).Tower_Type
@@ -508,19 +526,26 @@ DeleteBullet ENDP
 
 ;==========================     Enemy     =============================
 ;----------------------------------------------------------------------   
-ActivateEnemy PROC USES esi ecx ebx,
+ActivateEnemy PROC,
     pEnemy: DWORD
 ;使怪物进入地图，开始移动。
 ;require: 特定怪物的指针
 ;----------------------------------------------------------------------
     ;将特定怪物指针加入当前游戏怪物指针队列中
+    pushad
     mov     esi, OFFSET Game.pEnemyArray
     inc     Game.Enemy_Num
     mov     ecx, Game.Enemy_Num
     dec     ecx
     mov     ebx, pEnemy
     mov     [esi + ecx * TYPE DWORD], ebx
-
+    .IF ecx == 11
+        mov ecx, ecx
+    .ENDIF
+    mov     eax, esi
+    mov     ebx, ecx
+    shl     ebx, 2
+    add     eax, ebx
     ;初始化怪物的初始、当前、终点位置
     mov     esi, pEnemy
     mov     ecx, Game.Start_Pos.x
@@ -536,6 +561,7 @@ ActivateEnemy PROC USES esi ecx ebx,
     ;初始化怪物朝向：向下
     mov     ecx, DOWN
     mov     (Enemy PTR [esi]).Current_Dir, ecx
+    popad
     ret
 ActivateEnemy ENDP
 
@@ -626,7 +652,11 @@ LEFT_RIGHT:
         mov choosed_dir, DOWN
         jmp EnemyMove_Exit
     .ENDIF
-    add (Enemy PTR [edi]).Station, 1
+    mov eax, (Enemy PTR [edi]).Station
+    mov edx, Game.Station_Num
+    .IF eax < edx
+        add (Enemy PTR [edi]).Station, 1
+    .ENDIF
     mov choosed_dir, 4
     jmp EnemyMove_Exit
 
@@ -661,7 +691,11 @@ UP_DOWN:
         jmp EnemyMove_Exit
     .ENDIF
 
-    add (Enemy PTR [edi]).Station, 1
+    mov eax, (Enemy PTR [edi]).Station
+    mov edx, Game.Station_Num
+    .IF eax < edx
+        add (Enemy PTR [edi]).Station, 1
+    .ENDIF
     mov choosed_dir, 4
     jmp EnemyMove_Exit
 
@@ -680,6 +714,8 @@ EnemyMove_Exit:
       inc     (Enemy PTR [edi]).Current_Pos.y
       mov     (Enemy PTR [edi]).Current_Dir, DOWN
     .ENDIF
+    mov eax, (Enemy PTR [edi]).Station
+    mov ebx, Game.Station_Num
     popad
     ret
 EnemyMove ENDP
@@ -698,7 +734,7 @@ CheckAllDie:
     mov     edi, [ebx]
     mov     edx, (Enemy PTR [edi]).Current_Life
     .IF edx == 0
-        INVOKE EnemyDie, eax
+        INVOKE DeleteEnemy, eax
     .ENDIF
     add     ebx, TYPE DWORD
     loop    CheckAllDie
@@ -707,7 +743,7 @@ EnemyCheckDie_Exit:
 EnemyCheckDie ENDP
 
 ;----------------------------------------------------------------------   
-EnemyDie PROC USES ebx edi ecx eax,
+DeleteEnemy PROC USES ebx edi ecx eax,
     _EnemyNumber: DWORD
 ;
 ;怪物死亡，将怪物从队列中删除
@@ -727,8 +763,9 @@ EnemyQueueMoveForward:
     mov     [ebx], edi
     add     ebx, 4
     loop    EnemyQueueMoveForward
+    dec     Game.Enemy_Num
     ret
-EnemyDie ENDP
+DeleteEnemy ENDP
 
 ;=========================== player ==================================
 ;----------------------------------------------------------------------     

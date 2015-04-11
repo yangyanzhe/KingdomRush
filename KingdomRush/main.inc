@@ -32,13 +32,17 @@ blankSignNum    = 5
 towerSignNum    = 3
 monsterNum	 	= 1
 bulletNum		= 2
+animateNum    	= 16
 
 mapHandler      BitmapInfo mapNum DUP(<>)
 blankSet        PositionSet mapNum DUP(<>)
 signHandler     BitmapInfo signNum DUP(<>)
 towerHandler    BitmapInfo towerNum DUP(<>)
 bulletHandler   BitmapInfo bulletNum DUP(<>) 
+animateHandler  BitmapInfo animateNum DUP(<>) 
 monsterHandler  MonsterBitmapInfo monsterNum DUP(<>)
+
+testAnimate		Animate <0, <500, 250>, 0>
 
 IDI_ICON        EQU 101
 IDB_MAP         EQU 102
@@ -74,6 +78,25 @@ IDB_BLANKCLICK  EQU 124
 IDB_BULLET		 EQU 127
 IDB_BULLET_BOMB  EQU 127
 IDB_BULLET_MAGIC EQU 128
+
+IDB_ANIMATE 		EQU	140
+IDB_ANIMATE_WM10	EQU	140
+IDB_ANIMATE_WM11	EQU	141
+IDB_ANIMATE_WM12	EQU	142
+IDB_ANIMATE_WM13	EQU	143
+IDB_ANIMATE_WM14	EQU	144
+IDB_ANIMATE_WM15	EQU	145
+IDB_ANIMATE_WM16	EQU	146
+IDB_ANIMATE_WM17	EQU	147
+
+IDB_ANIMATE_DD10	EQU 148
+IDB_ANIMATE_DD11	EQU 149
+IDB_ANIMATE_DD12	EQU 150
+IDB_ANIMATE_DD13	EQU 151
+IDB_ANIMATE_DD14	EQU 152
+IDB_ANIMATE_DD15	EQU 153
+IDB_ANIMATE_DD16	EQU 154
+IDB_ANIMATE_DD17	EQU 155
 
 ; Monster编号规则：ID+方向+状态
 ; 例如：101表示ID：1，方向：0，状态：1

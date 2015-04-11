@@ -52,6 +52,12 @@ Bullet struct
     Gesture             dd ?
 Bullet ends
 
+Animate struct
+	Animate_Type		dw ?
+	Pos					Coord <>
+	Gesture				dd ?
+Animate ends
+
 ;游戏信息
 GameInfo struct
     Tick                dd ?                    ;游戏计时器
@@ -67,13 +73,13 @@ GameInfo struct
     Cur_Tick			dd ?
     Tower_Num           dd ?
     Enemy_Num           dd ?
+    Bullet_Num          dd ?
+    BulletArray         Bullet 100 dup (<>)
     TowerArray			Tower 100 dup(<>)       ;当前所有塔
     pEnemyArray			dd 100 dup(?)		    ;当前所有怪物的指针
     RoundArray			Round 20 dup(<>)		;游戏所有轮次
     Station_Num         dd ?
-    StationArray        Coord 10 dup(<>)
-    Bullet_Num          dd ?
-    BulletArray         Bullet 100 dup (<>)
+    StationArray        Coord 20 dup(<>)
     ; 记录是否点击以及点击位置
     IsClicked           dd 0
     ClickedIndex        dd 0
