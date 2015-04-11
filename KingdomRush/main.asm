@@ -356,7 +356,7 @@ InitMapInfo PROC
     mov     ebx, OFFSET blankSet[0].position
     mov     edx, OFFSET Game.TowerArray
 InitTower:  
-    mov     (Tower PTR [edx]).Tower_Type, 1     ;塔的初始类型为0（空地）
+    mov     (Tower PTR [edx]).Tower_Type, 0     ;塔的初始类型为0（空地）
     mov     (Tower PTR [edx]).Range, 100        ;塔的攻击范围
     mov     eax, (Coord PTR [ebx]).x
     mov     (Tower PTR [edx]).Pos.x, eax
@@ -679,10 +679,11 @@ PaintProc PROC,
 	; 画建塔提示圆圈
 	INVOKE	PaintSigns
 	
-	INVOKE 	BitBlt, hDC, 0, 0, window_w, window_h, memDC, 0, 0, SRCCOPY 
+	INVOKE 	BitBlt, hDC, 0, 0, window_w, window_h, memDC, 0, 0, SRCCOPY
+    INVOKE 	DeleteObject, hBitmap
     INVOKE 	DeleteDC, memDC
 	INVOKE 	DeleteDC, imgDC
-	INVOKE 	DeleteObject, hBitmap
+    INVOKE 	ReleaseDC, hWnd, hDC
 
 	ret
 PaintProc ENDP
