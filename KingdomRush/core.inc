@@ -63,4 +63,10 @@ UpdateTimer PROTO
 GetNextStation PROTO,
     pEnemy: DWORD
 
+CreateBullet PROTO,
+    pTower: DWORD,
+    pEnemy: DWORD
+
+BulletMove PROTO,
+    pBullet: DWORD
 ENDIF

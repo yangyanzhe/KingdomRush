@@ -45,9 +45,17 @@ Round struct
     state               dd ?                    ;本轮状态
 Round ends
 
+Bullet struct
+    Bullet_Type         dd ?
+    Pos                 Coord <>
+    Target              dd ?
+    Gesture             dd ?
+Bullet ends
+
 ;游戏信息
 GameInfo struct
     Tick                dd ?                    ;游戏计时器
+    TowerTick           dd ?                    ;塔攻击间隔计时器
     State				dd ?
     Player_Life			dd ?
     Player_Money		dd ?
@@ -64,6 +72,8 @@ GameInfo struct
     RoundArray			Round 20 dup(<>)		;游戏所有轮次
     Station_Num         dd ?
     StationArray        Coord 10 dup(<>)
+    Bullet_Num          dd ?
+    BulletArray         Bullet 100 dup (<>)
     ; 记录是否点击以及点击位置
     IsClicked           dd 0
     ClickedIndex        dd 0
