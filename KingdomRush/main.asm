@@ -324,6 +324,26 @@ LoadMonster0:
     pop     ecx
     loop    LoadMonster
 
+	; 载入子弹
+	mov     ecx, bulletNum
+    mov     ebx, OFFSET bulletHandler
+    mov     edx, IDB_BULLET
+LoadBullet:
+    push    ecx
+    push    edx
+    INVOKE  LoadBitmap, hInst, edx
+    mov     (BitmapInfo PTR [ebx]).bHandler, eax
+    INVOKE  GetObject, (BitmapInfo PTR [ebx]).bHandler, SIZEOF BITMAP, ADDR bm
+    mov     eax, bm.bmWidth
+    mov     (BitmapInfo PTR [ebx]).bWidth, eax
+    mov     eax, bm.bmHeight
+    mov     (BitmapInfo PTR [ebx]).bHeight, eax
+    pop     edx
+    pop     ecx
+    add     ebx, TYPE BitmapInfo
+    add     edx, 1
+    loop    LoadBullet
+
 	ret
 InitImages ENDP
 
@@ -590,6 +610,33 @@ PaintSignsExit:
     ret
 PaintSigns ENDP
 
+;---------------------------------------------------
+PaintBullets PROC uses ebx eax ecx
+;
+;---------------------------------------------------
+	LOCAL   x: DWORD         ; 画标志的原点
+    LOCAL   y: DWORD         ; 画标志的原点
+
+	mov		ecx, Game.Bullet_Num
+	mov     ebx, OFFSET Game.BulletArray
+
+DrawBullet:
+    mov     edx, OFFSET bulletHandler
+	mov		eax, (Bullet PTR [ebx]).Bullet_Type
+	add		edx, eax
+	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
+	INVOKE	TransparentBlt, 
+			memDC, x, y,
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
+			imgDC, 0, 0,
+            (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
+			tcolor
+	add		ebx, sizeof Bullet
+	loop	DrawBullet
+
+	ret
+PaintBullets ENDP
+
 ;-----------------------------------------------------------------------
 PaintProc PROC,
 	hWnd:DWORD
@@ -627,6 +674,7 @@ PaintProc PROC,
 	INVOKE 	PaintMonsters
 
 	; 画子弹
+	;INVOKE  PaintBullets
 
 	; 画建塔提示圆圈
 	INVOKE	PaintSigns

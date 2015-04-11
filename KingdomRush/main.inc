@@ -29,11 +29,13 @@ mapNum      	= 1
 towerNum    	= 5
 signNum     	= 5
 monsterNum	 	= 1
+bulletNum		= 2
 
 mapHandler      BitmapInfo mapNum DUP(<>)
 blankSet        PositionSet mapNum DUP(<>)
-towerHandler    BitmapInfo towerNum DUP(<>) 
 signHandler     BitmapInfo signNum DUP(<>)
+towerHandler    BitmapInfo towerNum DUP(<>)
+bulletHandler   BitmapInfo bulletNum DUP(<>) 
 monsterHandler  MonsterBitmapInfo monsterNum DUP(<>)
 
 IDI_ICON        EQU 101
@@ -61,6 +63,10 @@ IDB_TURRET		EQU 119
 
 IDB_BLANKCLICK  EQU 120
 IDB_PRICE       EQU 121
+
+IDB_BULLET		 EQU 127
+IDB_BULLET_BOMB  EQU 127
+IDB_BULLET_MAGIC EQU 128
 
 ; Monster编号规则：ID+方向+状态
 ; 例如：101表示ID：1，方向：0，状态：1
