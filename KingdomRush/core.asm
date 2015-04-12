@@ -26,6 +26,8 @@ DirectionY      dd 1, 0, 0, 1
 Distance1    =   10
 Distance2    =   50
 Distance3    =   70
+AnimateTotal =   8
+
 .code
 ;==========================     Game      =============================
 ;----------------------------------------------------------------------     
@@ -56,6 +58,7 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
     mov     Game.End_Pos.x, 699
     mov     Game.End_Pos.y, 400
     mov     Game.Bullet_Num, 0
+    mov     Game.Animate_Num, 0
     mov     Game.Station_Num, Station_Num
 
     mov     edx, OFFSET Station
@@ -315,6 +318,7 @@ SkipMove:
             INVOKE DeleteBullet, edi
             sub ebx, TYPE Bullet
             sub edi, 1
+            INVOKE InsertAnimate, (Bullet PTR [ebx]).Pos.x, (Bullet PTR [ebx]).Pos.y, 1
         .ENDIF
     .ENDIF
     add ebx, TYPE Bullet
@@ -582,6 +586,7 @@ BulletMoveExit:
     ret
 BulletMove ENDP
 
+;----------------------------------------------------------------------
 DeleteBullet PROC,
     _BulletNumber: DWORD
 ;删除一颗子弹
@@ -628,6 +633,112 @@ DeleteBulletExit:
     popad
     ret
 DeleteBullet ENDP
+
+;==========================    Animate    =============================
+;---------------------------------------------------------------------- 
+InsertAnimate PROC,
+    px: DWORD,
+    py: DWORD,
+    _Type: DWORD
+;插入动画
+;require: 动画坐标、类型
+;---------------------------------------------------------------------- 
+    pushad
+    mov ebx, OFFSET Game.AnimateArray
+    mov ecx, Game.Animate_Num
+    mov eax, 0
+FindAnimateLoop:
+    .IF ecx == eax
+        jmp FoundInsertedAnimatePosition
+    .ENDIF
+    add ebx, TYPE Animate
+    add eax, 1
+    jmp FindAnimateLoop
+
+FoundInsertedAnimatePosition:
+    mov eax, px
+    mov (Animate PTR [ebx]).Pos.x, eax
+    mov eax, py
+    mov (Animate PTR [ebx]).Pos.y, eax
+    mov (Animate PTR [ebx]).Gesture, 0
+    mov eax, _Type
+    mov (Animate PTR [ebx]).Animate_Type, eax
+    inc Game.Animate_Num
+    popad
+    ret
+InsertAnimate ENDP
+
+;---------------------------------------------------------------------- 
+DeleteAnimate PROC,
+    _AnimateNumber: DWORD
+;删除动画
+;require: 动画在队列中的下标(从0开始)
+;---------------------------------------------------------------------- 
+    pushad
+    mov ebx, OFFSET Game.AnimateArray
+    mov ecx, _AnimateNumber
+    mov eax, 0
+FindDeletedAnimateLoop:
+    .IF ecx == eax
+        jmp FoundDeletedAnimatePosition
+    .ENDIF
+    add ebx, TYPE Animate
+    add eax, 1
+    jmp FindDeletedAnimateLoop
+FoundDeletedAnimatePosition:
+    mov ecx, Game.Animate_Num
+    dec ecx
+MoveAnimateArray:
+    .IF eax == ecx
+        jmp DeleteAnimateExit
+    .ENDIF
+    mov esi, ebx
+    add esi, TYPE Animate
+    push eax
+    mov eax, (Animate PTR [esi]).Animate_Type
+    mov (Animate PTR [ebx]).Animate_Type, eax
+    mov eax, (Animate PTR [esi]).Pos.x
+    mov (Animate PTR [ebx]).Pos.x, eax
+    mov eax, (Animate PTR [esi]).Pos.y
+    mov (Animate PTR [ebx]).Pos.y, eax
+    mov eax, (Animate PTR [esi]).Gesture
+    mov (Animate PTR [ebx]).Gesture, eax
+    pop eax
+    inc eax
+    jmp MoveAnimateArray
+DeleteAnimateExit:
+    dec Game.Animate_Num
+    popad
+    ret
+DeleteAnimate ENDP
+
+;---------------------------------------------------------------------- 
+UpdateAnimates PROC
+
+;更新动画
+;----------------------------------------------------------------------
+    pushad
+    mov ebx, OFFSET Game.AnimateArray
+    mov ecx, Game.Animate_Num
+    mov eax, 0
+UpdateAnimateLoop:
+    .IF ecx == eax
+        jmp UpdateAnimateExit
+    .ENDIF
+    add (Animate PTR [ebx]).Gesture, 1
+    mov edx, (Animate PTR [ebx]).Gesture
+    .IF edx == AnimateTotal
+        INVOKE DeleteAnimate, eax
+        sub eax, 1
+        sub ebx, TYPE Animate
+    .ENDIF
+    add ebx, TYPE Animate
+    add eax, 1
+    jmp UpdateAnimateLoop
+UpdateAnimateExit:
+    popad
+    ret
+UpdateAnimates ENDP
 
 ;==========================     Enemy     =============================
 ;----------------------------------------------------------------------   

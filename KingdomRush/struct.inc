@@ -54,7 +54,7 @@ Bullet struct
 Bullet ends
 
 Animate struct
-	Animate_Type		dw ?
+	Animate_Type		dd ?
 	Pos					Coord <>
 	Gesture				dd ?
 Animate ends
@@ -70,14 +70,15 @@ GameInfo struct
     End_Pos             Coord <>
     Now_Round	        dd ?                    ;当前Round编号
     Next_Round          dd ?                    ;下一轮Round编号
-    Round_Num			dd ?                    ;总轮次数
-    Cur_Tick			dd ?
-    Tower_Num           dd ?
-    Enemy_Num           dd ?
-    Bullet_Num          dd ?
-    BulletArray         Bullet 100 dup (<>)
-    TowerArray			Tower 100 dup(<>)       ;当前所有塔
-    pEnemyArray			dd 100 dup(?)		    ;当前所有怪物的指针
+    Round_Num			dd ?                    ;总轮次数                                           
+    Tower_Num           dd ?                    ;塔的总数
+    Enemy_Num           dd ?                    ;怪物总数
+    Bullet_Num          dd ?                    ;子弹总数
+    Animate_Num         dd ?                    ;动画总数
+    AnimateArray        Animate 100 dup(<>)     ;动画队列
+    BulletArray         Bullet 100 dup (<>)     ;子弹队列
+    TowerArray			Tower 100 dup(<>)       ;塔的队列
+    pEnemyArray			dd 100 dup(?)		    ;怪物指针队列
     RoundArray			Round 20 dup(<>)		;游戏所有轮次
     Station_Num         dd ?
     StationArray        Coord 20 dup(<>)
