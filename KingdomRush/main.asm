@@ -9,11 +9,13 @@ INCLUDE     gdi32.inc
 INCLUDE     user32.inc
 INCLUDE		msimg32.inc
 INCLUDE     kernel32.inc
+INCLUDE		winmm.inc
 
 INCLUDELIB  gdi32.lib
 INCLUDELIB  kernel32.lib
 INCLUDELIB  user32.lib
 INCLUDELIB  msimg32.lib
+INCLUDELIB  winmm.lib
 
 INCLUDE     core.inc
 INCLUDE     main.inc
