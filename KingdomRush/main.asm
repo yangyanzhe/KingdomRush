@@ -802,13 +802,11 @@ DrawBulletExit:
 PaintBullets ENDP
 
 ;---------------------------------------------------
-PaintAnimates PROC uses eax ebx ecx edx 
-;
+DrawSingleAnimate PROC uses eax ecx edx 
+; 
+;	ebx-offset animate
 ;---------------------------------------------------
 	mov		eax, 0
-	mov		ebx, 0
-	; get the struct-Animate
-	mov     ebx, OFFSET testAnimate
 
 	; get the image
     mov     edx, OFFSET animateHandler
@@ -841,6 +839,30 @@ PaintAnimates PROC uses eax ebx ecx edx
 	.ENDIF
 	mov		(Animate PTR [ebx]).Gesture, eax
 
+	ret
+DrawSingleAnimate ENDP
+
+;---------------------------------------------------
+PaintAnimates PROC uses eax ebx ecx edx 
+;
+;---------------------------------------------------
+	mov		eax, 0
+	mov		ebx, 0
+
+	mov		ecx, Game.Animate_Num
+	cmp		ecx, 0
+	je		PaintAnimatesExit
+
+	; get the struct-Animate
+	mov     ebx, OFFSET Game.AnimateArray
+L1:
+	push	ecx
+	INVOKE	DrawSingleAnimate
+	add		ebx, TYPE Animate
+	pop		ecx
+	loop	L1
+
+PaintAnimatesExit:
 	ret
 PaintAnimates ENDP
 
@@ -906,7 +928,8 @@ AlreadyStarted:
 	INVOKE  PaintBullets
 
 	; 画动画
-	INVOKE	PaintAnimates
+	mov     ebx, OFFSET windmill
+	INVOKE	DrawSingleAnimate
 
 	; 画建塔提示圆圈
 	INVOKE	PaintSigns

@@ -57,7 +57,7 @@ towerHandler        BitmapInfo towerNum DUP(<>)
 monsterHandler      MonsterBitmapInfo monsterNum DUP(<>)
 bulletHandler       BitmapInfo bulletNum DUP(<>)
 animateHandler      BitmapInfo animateNum DUP(<>)
-testAnimate		    Animate <0, <500, 250>, 0>
+windmill		    Animate <0, <500, 250>, 0>
 
 IDI_ICON                EQU 101
 IDB_INSTRUCTION         EQU 102
