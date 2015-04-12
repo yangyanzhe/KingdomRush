@@ -9,11 +9,13 @@ INCLUDE     gdi32.inc
 INCLUDE     user32.inc
 INCLUDE		msimg32.inc
 INCLUDE     kernel32.inc
+INCLUDE		winmm.inc
 
 INCLUDELIB  gdi32.lib
 INCLUDELIB  kernel32.lib
 INCLUDELIB  user32.lib
 INCLUDELIB  msimg32.lib
+INCLUDELIB  winmm.lib
 
 INCLUDE     core.inc
 INCLUDE     main.inc
@@ -36,7 +38,11 @@ LMouseProc PROTO,
 	cursorPosition: Coord
 	
 PaintProc PROTO,
-    hWnd: DWORD
+	hWnd: DWORD
+
+PlayMp3File PROTO,
+	hWin:DWORD,
+	NameOfFile:DWORD
 
 .code
 
@@ -156,7 +162,14 @@ WinProc PROC,
 	  mov       hDC, eax
 	  INVOKE    PaintProc, hWnd
 	  INVOKE    EndPaint, hWnd, ADDR ps
-	  jmp       WinProcExit
+
+	  ;播放音乐
+	  .IF PlayFlag == 0
+		mov PlayFlag,1  
+		invoke PlayMp3File,hWnd,ADDR MusicFileName
+	  .ENDIF
+	
+	jmp       WinProcExit
     .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标事件
       mov  	    ebx, lParam
       movzx     edx, bx
@@ -777,6 +790,7 @@ DrawBullet:
 			tcolor
     pop     edx
 	add		edx, TYPE Bullet
+
 	mov		ecx, count
 	loop	DrawBullet
 
@@ -880,6 +894,28 @@ PaintProc PROC,
 
 	ret
 PaintProc ENDP
+
+;----------------------------------------------------------------------
+PlayMp3File PROC hWin:DWORD,NameOfFile:DWORD
+;
+; 播放音乐函数
+;----------------------------------------------------------------------
+	LOCAL mciOpenParms:MCI_OPEN_PARMS, mciPlayParms:MCI_PLAY_PARMS
+
+	mov eax, hWin        
+	mov mciPlayParms.dwCallback,eax
+	mov eax, OFFSET Mp3Device
+	mov mciOpenParms.lpstrDeviceType, eax
+	mov eax, NameOfFile
+	mov mciOpenParms.lpstrElementName, eax
+	INVOKE mciSendCommand, 0, MCI_OPEN,MCI_OPEN_TYPE or MCI_OPEN_ELEMENT, ADDR mciOpenParms
+	mov eax, mciOpenParms.wDeviceID
+	mov Mp3DeviceID, eax
+	invoke mciSendCommand, Mp3DeviceID, MCI_PLAY, MCI_NOTIFY, ADDR mciPlayParms
+	
+	ret  
+
+PlayMp3File ENDP
 
 ;---------------------------------------------------
 ErrorHandler PROC
