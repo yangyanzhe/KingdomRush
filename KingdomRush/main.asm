@@ -347,7 +347,7 @@ InitMapInfo PROC
     mov     edx, OFFSET Game.TowerArray
 InitTower:  
     mov     (Tower PTR [edx]).Tower_Type, 0     ;ËþµÄ³õÊ¼ÀàÐÍÎª0£¨¿ÕµØ£©
-    mov     (Tower PTR [edx]).Range, 100        ;ËþµÄ¹¥»÷·¶Î§
+    mov     (Tower PTR [edx]).Range, 80        ;ËþµÄ¹¥»÷·¶Î§
     mov     eax, (Coord PTR [ebx]).x
     mov     (Tower PTR [edx]).Pos.x, eax
     mov     eax, (Coord PTR [ebx]).y
@@ -766,11 +766,11 @@ PaintBullets PROC uses eax ebx ecx edx
 	je		DrawBulletExit
 
 	mov     edx, OFFSET Game.BulletArray
-	push	edx
-
+	
 DrawBullet:
 	; get the image
-	mov		count, ecx
+	push	edx
+    mov		count, ecx
     mov     ebx, OFFSET bulletHandler
 	mov		eax, (Bullet PTR [edx]).Bullet_Type
 	mov		ecx, type BitmapInfo
@@ -779,14 +779,16 @@ DrawBullet:
 
 	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
 	pop		edx
+    push    edx
     INVOKE	TransparentBlt, 
 			memDC, (Bullet PTR [edx]).Pos.x, (Bullet PTR [edx]).Pos.y,
             (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
 			imgDC, 0, 0,
             (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
 			tcolor
+    pop     edx
+	add		edx, TYPE Bullet
 
-	add		edx, sizeof Bullet
 	mov		ecx, count
 	loop	DrawBullet
 
@@ -874,7 +876,7 @@ PaintProc PROC,
 	INVOKE 	PaintMonsters
 
 	; »­×Óµ¯
-	;INVOKE  PaintBullets
+	INVOKE  PaintBullets
 
 	; »­¶¯»­
 	INVOKE	PaintAnimates
