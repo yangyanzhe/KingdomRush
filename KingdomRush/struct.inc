@@ -85,6 +85,9 @@ GameInfo struct
     ; 记录是否点击以及点击位置
     IsClicked           dd 0
     ClickedIndex        dd 0
+    ; 记录State=0时(Instruction)的状态
+    InstructionIndex    dd 0
+    ButtonIndex         dd 0
 GameInfo ends
 
 ; 图片信息

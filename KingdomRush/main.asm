@@ -30,7 +30,10 @@ InitImages PROTO,
 
 InitMapInfo PROTO
 
-TimerProc PROTO,
+TimerProc_Prepared PROTO,
+    hWnd: DWORD
+
+TimerProc_Started PROTO,
     hWnd: DWORD
 
 MouseMoveProc_Prepared PROTO,
@@ -167,7 +170,12 @@ WinProc PROC,
     mov      eax, localMsg
 
     .IF eax == WM_TIMER
-      INVOKE    TimerProc, hWnd
+      .IF Game.State == 0
+        INVOKE 	TimerProc_Prepared, hWnd
+      .ELSE
+		INVOKE 	TimerProc_Started, hWnd
+      .ENDIF
+      INVOKE    InvalidateRect, hWnd, NULL, FALSE
       jmp    	WinProcExit
     .ELSEIF eax == WM_PAINT         ; 绘图
 	  INVOKE    BeginPaint, hWnd, ADDR ps
@@ -182,21 +190,6 @@ WinProc PROC,
 	  .ENDIF
 	
 	  jmp       WinProcExit
-    .ELSEIF eax == WM_MOUSEMOVE     ; 鼠标移动事件
-      mov  	    ebx, lParam
-      movzx     edx, bx
-      mov     	cursorPosition.x, edx
-	  shr  	    ebx, 16
-      movzx     edx, bx
-	  mov     	cursorPosition.y, edx
-      .IF wParam == MK_LBUTTON
-        .IF Game.State == 0
-          INVOKE 	MouseMoveProc_Prepared, hWnd, cursorPosition
-        .ELSE
-		  INVOKE 	MouseMoveProc_Started, hWnd, cursorPosition
-        .ENDIF
-      .ENDIF
-      jmp       WinProcExit
     .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标点击事件
       mov  	    ebx, lParam
       movzx     edx, bx
@@ -393,7 +386,143 @@ InitTower:
 InitMapInfo ENDP
 
 ;-----------------------------------------------------------------------
-TimerProc PROC,
+TimerProc_Prepared PROC,
+    hWnd: DWORD
+;-----------------------------------------------------------------------
+    LOCAL   p: POINT
+
+    INVOKE  GetCursorPos, ADDR p
+    INVOKE  ScreenToClient, hWnd, ADDR p
+    mov     eax, Game.InstructionIndex
+    .IF eax == 0
+      mov   eax, START_BUTTON_POS.x
+      cmp   eax, p.x
+      jg    TimerStartExit
+      add   eax, buttonHandler[0].bWidth
+      cmp   eax, p.x
+      jl    TimerStartExit
+      mov   eax, START_BUTTON_POS.y
+      cmp   eax, p.y
+      jg    TimerStartExit
+      add   eax, buttonHandler[0].bHeight
+      cmp   eax, p.y
+      jl    TimerStartExit
+
+      mov   Game.ButtonIndex, 1
+      ret
+
+TimerStartExit:
+      mov   Game.ButtonIndex, 0
+      ret
+    .ELSEIF eax == 1
+      mov   ebx, OFFSET buttonHandler
+      add   ebx, TYPE BitmapInfo
+      mov   eax, SKIP_BUTTON_POS1.x
+      cmp   eax, p.x
+      jg    TimerInstruction1Next
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, p.x
+      jl    TimerInstruction1Next
+      mov   eax, SKIP_BUTTON_POS1.y
+      cmp   eax, p.y
+      jg    TimerInstruction1Next
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, p.y
+      jl    TimerInstruction1Next
+
+      mov   Game.ButtonIndex, 1
+      ret
+
+TimerInstruction1Next:
+      add   ebx, TYPE BitmapInfo
+      mov   eax, CONTINUE_BUTTON_POS1.x
+      cmp   eax, p.x
+      jg    TimerInstruction1Exit
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, p.x
+      jl    TimerInstruction1Exit
+      mov   eax, CONTINUE_BUTTON_POS1.y
+      cmp   eax, p.y
+      jg    TimerInstruction1Exit
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, p.y
+      jl    TimerInstruction1Exit
+
+      mov   Game.ButtonIndex, 2
+      ret
+
+TimerInstruction1Exit:
+      mov   Game.ButtonIndex, 0
+      ret
+    .ELSEIF eax == 2
+      mov   ebx, OFFSET buttonHandler
+      add   ebx, TYPE BitmapInfo
+      add   ebx, TYPE BitmapInfo
+      add   ebx, TYPE BitmapInfo
+      mov   eax, SKIP_BUTTON_POS2.x
+      cmp   eax, p.x
+      jg    TimerInstruction2Next
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, p.x
+      jl    TimerInstruction2Next
+      mov   eax, SKIP_BUTTON_POS2.y
+      cmp   eax, p.y
+      jg    TimerInstruction2Next
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, p.y
+      jl    TimerInstruction2Next
+
+      mov   Game.ButtonIndex, 1
+      ret
+
+TimerInstruction2Next:
+      add   ebx, TYPE BitmapInfo
+      mov   eax, CONTINUE_BUTTON_POS2.x
+      cmp   eax, p.x
+      jg    TimerInstruction2Exit
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, p.x
+      jl    TimerInstruction2Exit
+      mov   eax, CONTINUE_BUTTON_POS2.y
+      cmp   eax, p.y
+      jg    TimerInstruction2Exit
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, p.y
+      jl    TimerInstruction2Exit
+
+      mov   Game.ButtonIndex, 2
+      ret
+
+TimerInstruction2Exit:
+      mov   Game.ButtonIndex, 0
+      ret
+    .ELSEIF eax == 3
+      mov   ebx, OFFSET buttonHandler
+      add   ebx, TYPE BitmapInfo
+      mov   eax, READY_BUTTON_POS.x
+      cmp   eax, p.x
+      jg    TimerInstruction3Exit
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, p.x
+      jl    TimerInstruction3Exit
+      mov   eax, READY_BUTTON_POS.y
+      cmp   eax, p.y
+      jg    TimerInstruction3Exit
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, p.y
+      jl    TimerInstruction3Exit
+
+      mov   Game.ButtonIndex, 1
+      ret
+
+TimerInstruction3Exit:
+      mov   Game.ButtonIndex, 0
+      ret
+    .ENDIF
+TimerProc_Prepared ENDP
+
+;-----------------------------------------------------------------------
+TimerProc_Started PROC,
     hWnd: DWORD
 ;-----------------------------------------------------------------------
     ; INVOKE MessageBox, hWnd, NULL, NULL, MB_OK
@@ -402,34 +531,128 @@ TimerProc PROC,
     INVOKE UpdateTowers
     INVOKE UpdateBullets
     ; INVOKE UpdateAnimates
-    INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
-TimerProc ENDP
-
-;-----------------------------------------------------------------------
-MouseMoveProc_Prepared PROC,
-	hWnd: DWORD,
-	cursorPosition: Coord
-;-----------------------------------------------------------------------
-
-    ret
-MouseMoveProc_Prepared ENDP
-
-;-----------------------------------------------------------------------
-MouseMoveProc_Started PROC,
-	hWnd: DWORD,
-	cursorPosition: Coord
-;-----------------------------------------------------------------------
-
-    ret
-MouseMoveProc_Started ENDP
+TimerProc_Started ENDP
 
 ;-----------------------------------------------------------------------
 LMouseProc_Prepared PROC,
 	hWnd: DWORD,
 	cursorPosition: Coord
 ;-----------------------------------------------------------------------
+    mov     eax, Game.InstructionIndex
+    .IF eax == 0
+      mov   eax, START_BUTTON_POS.x
+      cmp   eax, cursorPosition.x
+      jg    LMouseProc_PreparedExit
+      add   eax, buttonHandler[0].bWidth
+      cmp   eax, cursorPosition.x
+      jl    LMouseProc_PreparedExit
+      mov   eax, START_BUTTON_POS.y
+      cmp   eax, cursorPosition.y
+      jg    LMouseProc_PreparedExit
+      add   eax, buttonHandler[0].bHeight
+      cmp   eax, cursorPosition.y
+      jl    LMouseProc_PreparedExit
 
+      inc   Game.InstructionIndex
+
+    .ELSEIF eax == 1
+      mov   ebx, OFFSET buttonHandler
+      add   ebx, TYPE BitmapInfo
+      mov   eax, SKIP_BUTTON_POS1.x
+      cmp   eax, cursorPosition.x
+      jg    LMouseInstruction1Next
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, cursorPosition.x
+      jl    LMouseInstruction1Next
+      mov   eax, SKIP_BUTTON_POS1.y
+      cmp   eax, cursorPosition.y
+      jg    LMouseInstruction1Next
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, cursorPosition.y
+      jl    LMouseInstruction1Next
+
+      mov   Game.InstructionIndex, 0
+      inc   Game.State
+      jmp   LMouseProc_PreparedExit
+
+LMouseInstruction1Next:
+      add   ebx, TYPE BitmapInfo
+      mov   eax, CONTINUE_BUTTON_POS1.x
+      cmp   eax, cursorPosition.x
+      jg    LMouseProc_PreparedExit
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, cursorPosition.x
+      jl    LMouseProc_PreparedExit
+      mov   eax, CONTINUE_BUTTON_POS1.y
+      cmp   eax, cursorPosition.y
+      jg    LMouseProc_PreparedExit
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, cursorPosition.y
+      jl    LMouseProc_PreparedExit
+
+      inc   Game.InstructionIndex
+
+    .ELSEIF eax == 2
+      mov   ebx, OFFSET buttonHandler
+      add   ebx, TYPE BitmapInfo
+      mov   eax, SKIP_BUTTON_POS2.x
+      cmp   eax, cursorPosition.x
+      jg    LMouseInstruction2Next
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, cursorPosition.x
+      jl    LMouseInstruction2Next
+      mov   eax, SKIP_BUTTON_POS2.y
+      cmp   eax, cursorPosition.y
+      jg    LMouseInstruction2Next
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, cursorPosition.y
+      jl    LMouseInstruction2Next
+
+      mov   Game.InstructionIndex, 0
+      inc   Game.State
+      jmp   LMouseProc_PreparedExit
+
+LMouseInstruction2Next:
+      add   ebx, TYPE BitmapInfo
+      mov   eax, CONTINUE_BUTTON_POS2.x
+      cmp   eax, cursorPosition.x
+      jg    LMouseProc_PreparedExit
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, cursorPosition.x
+      jl    LMouseProc_PreparedExit
+      mov   eax, CONTINUE_BUTTON_POS2.y
+      cmp   eax, cursorPosition.y
+      jg    LMouseProc_PreparedExit
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, cursorPosition.y
+      jl    LMouseProc_PreparedExit
+
+      inc   Game.InstructionIndex
+
+    .ELSEIF eax == 3
+      mov   ebx, OFFSET buttonHandler
+      add   ebx, TYPE BitmapInfo
+      add   ebx, TYPE BitmapInfo
+      add   ebx, TYPE BitmapInfo
+      mov   eax, READY_BUTTON_POS.x
+      cmp   eax, cursorPosition.x
+      jg    LMouseProc_PreparedExit
+      add   eax, (BitmapInfo PTR [ebx]).bWidth
+      cmp   eax, cursorPosition.x
+      jl    LMouseProc_PreparedExit
+      mov   eax, READY_BUTTON_POS.y
+      cmp   eax, cursorPosition.y
+      jg    LMouseProc_PreparedExit
+      add   eax, (BitmapInfo PTR [ebx]).bHeight
+      cmp   eax, cursorPosition.y
+      jl    LMouseProc_PreparedExit
+
+      mov   Game.InstructionIndex, 0
+      inc   Game.State
+    .ENDIF
+
+LMouseProc_PreparedExit:
     ret
 LMouseProc_Prepared ENDP
 
@@ -927,7 +1150,7 @@ PaintProc PROC,
 
     ; 游戏尚未开始
     ; Start页面
-    mov     eax, Game.ClickedIndex
+    mov     eax, Game.InstructionIndex
     mov     ebx, OFFSET instructionHandler
     .WHILE eax > 0
       add   ebx, TYPE BitmapInfo
@@ -938,6 +1161,77 @@ PaintProc PROC,
 			memDC, 0, 0, window_w, window_h, 
 			imgDC, 0, 0, (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
 			SRCCOPY
+
+    ; 悬停的button绘制
+    cmp     Game.ButtonIndex, 0
+    je      PaintProcExit
+
+    mov     eax, Game.InstructionIndex
+    .IF eax == 0
+        INVOKE  SelectObject, imgDC, buttonHandler[0].bHandler
+        INVOKE  TransparentBlt, 
+                memDC, START_BUTTON_POS.x, START_BUTTON_POS.y,
+                buttonHandler[0].bWidth, buttonHandler[0].bHeight,
+                imgDC, 0, 0, 
+                buttonHandler[0].bWidth, buttonHandler[0].bHeight, 
+                tcolor
+    .ELSEIF eax == 1
+      mov   eax, Game.ButtonIndex
+      mov   ebx, OFFSET buttonHandler
+      add   ebx, TYPE BitmapInfo
+      .IF eax == 1
+        INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+        INVOKE  TransparentBlt, 
+                memDC, SKIP_BUTTON_POS1.x, SKIP_BUTTON_POS1.y,
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                imgDC, 0, 0, 
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                tcolor 
+      .ELSE
+        add     ebx, TYPE BitmapInfo
+        INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+        INVOKE  TransparentBlt, 
+                memDC, CONTINUE_BUTTON_POS1.x, CONTINUE_BUTTON_POS1.y,
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                imgDC, 0, 0, 
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                tcolor 
+      .ENDIF
+    .ELSEIF eax == 2
+      mov   eax, Game.ButtonIndex
+      mov   ebx, OFFSET buttonHandler
+      add   ebx, TYPE BitmapInfo
+      .IF eax == 1
+        INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+        INVOKE  TransparentBlt, 
+                memDC, SKIP_BUTTON_POS2.x, SKIP_BUTTON_POS2.y,
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                imgDC, 0, 0, 
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                tcolor
+      .ELSE
+        add     ebx, TYPE BitmapInfo
+        INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+        INVOKE  TransparentBlt, 
+                memDC, CONTINUE_BUTTON_POS2.x, CONTINUE_BUTTON_POS2.y,
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                imgDC, 0, 0, 
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                tcolor
+      .ENDIF
+    .ELSE
+        mov     ebx, OFFSET buttonHandler
+        add     ebx, TYPE BitmapInfo
+        add     ebx, TYPE BitmapInfo
+        add     ebx, TYPE BitmapInfo
+        INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+        INVOKE  TransparentBlt, 
+                memDC, READY_BUTTON_POS.x, READY_BUTTON_POS.y,
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                imgDC, 0, 0, 
+                (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight,
+                tcolor
+    .ENDIF
 
     jmp     PaintProcExit
 
