@@ -899,14 +899,18 @@ DrawSingleAnimate PROC uses eax ecx edx
 	mov		animateT, eax
 	mov		ecx, 8
 	mul		ecx
-	add		eax, (Animate PTR [ebx]).Gesture
+	.IF		animateT < 2
+		add		eax, (Animate PTR [ebx]).Gesture
+	.ENDIF
 	mov		ecx, (Animate PTR [ebx]).Gesture
 	mov		gesture, ecx
 
 	pushad
-	.IF		animateT == 1			; ¼ÓÉÏÕ¨µ¯ÉùÒô
-		.IF	gesture == 1
+	.IF	gesture == 1
+		.IF		animateT == 1			; ¼ÓÉÏÕ¨µ¯ÉùÒô
 			INVOKE	PlaySound, OFFSET BombFileName, 0, SND_ASYNC
+		.ELSEIF	animateT == 2
+			INVOKE  PlaySound, OFFSET AhFileName, 0, SND_ASYNC
 		.ENDIF
 	.ENDIF
 	popad

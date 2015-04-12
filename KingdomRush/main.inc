@@ -36,6 +36,7 @@ MusicFileName db 'resource/music/background01.mp3', 0
 StartFileName db 'resource/music/start.mp3', 0
 ClickFileName db 'resource/music/click.wav', 0
 BombFileName  db 'resource/music/bomb.wav', 0
+AhFileName	  db 'resource/music/ah.wav', 0
 
 instructionNum  = 4
 buttonNum       = 4
@@ -46,7 +47,7 @@ blankSignNum    = 5
 towerSignNum    = 3
 monsterNum	 	= 1
 bulletNum		= 2
-animateNum    	= 16
+animateNum    	= 17
 
 instructionHandler  BitmapInfo instructionNum DUP(<>)
 buttonHandler       BitmapInfo buttonNum DUP(<>)
@@ -57,7 +58,7 @@ towerHandler        BitmapInfo towerNum DUP(<>)
 monsterHandler      MonsterBitmapInfo monsterNum DUP(<>)
 bulletHandler       BitmapInfo bulletNum DUP(<>)
 animateHandler      BitmapInfo animateNum DUP(<>)
-windmill		    Animate <0, <500, 250>, 0>
+windmill		    Animate <2, <500, 250>, 7>
 
 IDI_ICON                EQU 101
 IDB_INSTRUCTION         EQU 102
