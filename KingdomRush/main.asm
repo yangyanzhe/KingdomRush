@@ -1,4 +1,4 @@
-TITLE Windows Application                   (WinApp.asm)
+TITLE Windows Application
 
 .386      
 .model flat,stdcall      
@@ -170,7 +170,9 @@ WinProc PROC,
 	  .ENDIF
 	
 	  jmp       WinProcExit
-    .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标事件
+    .ELSEIF eax == WM_MOUSEMOVE     ; 鼠标移动事件
+      jmp       WinProcExit
+    .ELSEIF eax == WM_LBUTTONUP     ; 鼠标点击事件
       mov  	    ebx, lParam
       movzx     edx, bx
       mov     	cursorPosition.x, edx
@@ -201,15 +203,19 @@ WinProc ENDP
 
 ;---------------------------------------------------------
 LoadTypeImages PROC,
-    hInst:DWORD
+        hInst: DWORD,
+        typeNum: DWORD,
+        typeHandler: DWORD,
+        typeID: DWORD
 ;
 ; As the load procedure are repeatable, remove the repeatable code here
-; Receives: ecx - num
-;           ebx - handler
-;           edx - IDB_XXX
 ;---------------------------------------------------------
     LOCAL   bm: BITMAP
- L1:
+
+    mov     ecx, typeNum
+    mov     ebx, typeHandler
+    mov     edx, typeID
+ LoadImages:
     push    ecx
     push    edx
     INVOKE  LoadBitmap, hInst, edx
@@ -223,7 +229,7 @@ LoadTypeImages PROC,
     pop     ecx
     add     ebx, TYPE BitmapInfo
     add     edx, 1
-    loop    L1
+    loop    LoadImages
 
     ret
 LoadTypeImages ENDP
@@ -239,11 +245,12 @@ InitImages PROC,
 ;---------------------------------------------------------
     LOCAL   bm: BITMAP
 
+    ; 载入开始图片和按钮
+    INVOKE  LoadTypeImages, hInst, instructionNum, OFFSET instructionHandler, IDB_INSTRUCTION
+    INVOKE  LoadTypeImages, hInst, buttonNum, OFFSET buttonHandler, IDB_BUTTON
+
     ; 载入地图图片
-    mov     ecx, mapNum
-    mov     ebx, OFFSET mapHandler
-    mov     edx, IDB_MAP
-    INVOKE  LoadTypeImages, hInst
+    INVOKE  LoadTypeImages, hInst, mapNum, OFFSET mapHandler, IDB_MAP
 
     ; 载入空地位置
     mov     ecx, mapNum
@@ -274,16 +281,10 @@ LoadBlankPosition0:
     loop    LoadBlankPosition
 
     ; 载入塔的图片
-    mov     ecx, towerNum
-    mov     ebx, OFFSET towerHandler
-    mov     edx, IDB_TOWER
-    INVOKE  LoadTypeImages, hInst
+    INVOKE  LoadTypeImages, hInst, towerNum, OFFSET towerHandler, IDB_TOWER
 
     ; 载入塔的标志的图片
-    mov     ecx, signNum
-    mov     ebx, OFFSET signHandler
-    mov     edx, IDB_SIGN
-    INVOKE  LoadTypeImages, hInst
+    INVOKE  LoadTypeImages, hInst, signNum, OFFSET signHandler, IDB_SIGN
 	
     ; 载入怪物图片
     mov     ecx, monsterNum
@@ -325,16 +326,10 @@ LoadMonster0:
     loop    LoadMonster
 
 	; 载入子弹
-	mov     ecx, bulletNum
-    mov     ebx, OFFSET bulletHandler
-    mov     edx, IDB_BULLET
-    INVOKE  LoadTypeImages, hInst
+    INVOKE  LoadTypeImages, hInst, bulletNum, OFFSET bulletHandler, IDB_BULLET
 
 	; 载入动画的图片
-    mov     ecx, animateNum
-    mov     ebx, OFFSET animateHandler
-    mov     edx, IDB_ANIMATE
-    INVOKE  LoadTypeImages, hInst
+    INVOKE  LoadTypeImages, hInst, animateNum, OFFSET animateHandler, IDB_ANIMATE
 
 	ret
 InitImages ENDP
@@ -343,13 +338,20 @@ InitImages ENDP
 InitMapInfo PROC
 ;-----------------------------------------------------------------------
     ; 初始化所有塔
-    mov     ecx, blankSet[0].number
+    mov     edx, OFFSET blankSet
+    mov     eax, Level
+    .WHILE eax > 0
+      add   edx, TYPE PositionSet
+      dec   eax
+    .ENDW
+    mov     ecx, (PositionSet PTR [edx]).number
     mov     Game.Tower_Num, ecx
-    mov     ebx, OFFSET blankSet[0].position
+    mov     ebx, edx
+    add     ebx, TYPE DWORD
     mov     edx, OFFSET Game.TowerArray
 InitTower:  
     mov     (Tower PTR [edx]).Tower_Type, 0     ;塔的初始类型为0（空地）
-    mov     (Tower PTR [edx]).Range, 80        ;塔的攻击范围
+    mov     (Tower PTR [edx]).Range, 80         ;塔的攻击范围
     mov     eax, (Coord PTR [ebx]).x
     mov     (Tower PTR [edx]).Pos.x, eax
     mov     eax, (Coord PTR [ebx]).y
@@ -554,19 +556,19 @@ PaintTowers PROC
 ;-----------------------------------------------------------------------
     ; 画出所有空地
 	INVOKE  SelectObject, imgDC, towerHandler[0].bHandler
-    mov     ecx, blankSet[0].number
-    mov     ebx, OFFSET blankSet[0].position
+    mov     ecx, Game.Tower_Num
+    mov     ebx, OFFSET Game.TowerArray
 DrawBlank:
 	push    ecx
-    mov     eax, (Coord PTR [ebx]).y
+    mov     eax, (Tower PTR [ebx]).Pos.y
     sub     eax, towerHandler[0].bHeight
 	INVOKE  TransparentBlt, 
-            memDC, (Coord PTR [ebx]).x, eax,
+            memDC, (Tower PTR [ebx]).Pos.x, eax,
             towerHandler[0].bWidth, towerHandler[0].bHeight,
             imgDC, 0, 0, 
             towerHandler[0].bWidth, towerHandler[0].bHeight,
             tcolor
-	add     ebx, TYPE Coord
+	add     ebx, TYPE Tower
 	pop     ecx
 	loop    DrawBlank
 	
@@ -864,11 +866,22 @@ PaintProc PROC,
     mov 	hOld, eax
 
     ; 判断是否处于等待页面
-    cmp     Game.State, 0
+    cmp     Game.State, 1
     jne     AlreadyStarted
 
     ; 游戏尚未开始
-    
+    ; Start页面
+    mov     eax, Game.ClickedIndex
+    mov     ebx, OFFSET instructionHandler
+    .WHILE eax > 0
+      add   ebx, TYPE BitmapInfo
+      dec   eax
+    .ENDW
+    INVOKE 	SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+	INVOKE 	StretchBlt, 
+			memDC, 0, 0, window_w, window_h, 
+			imgDC, 0, 0, (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
+			SRCCOPY
 
     jmp     PaintProcExit
 
@@ -897,14 +910,14 @@ AlreadyStarted:
 
 	; 画建塔提示圆圈
 	INVOKE	PaintSigns
-	
+
+PaintProcExit:
 	INVOKE 	BitBlt, hDC, 0, 0, window_w, window_h, memDC, 0, 0, SRCCOPY
     INVOKE 	DeleteObject, hBitmap
     INVOKE 	DeleteDC, memDC
 	INVOKE 	DeleteDC, imgDC
     INVOKE 	ReleaseDC, hWnd, hDC
 
-PaintProcExit:
 	ret
 PaintProc ENDP
 
