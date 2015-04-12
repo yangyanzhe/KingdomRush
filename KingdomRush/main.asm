@@ -834,10 +834,18 @@ DrawBullet:
     mov		count, ecx
     mov     ebx, OFFSET bulletHandler
 	mov		eax, (Bullet PTR [edx]).Bullet_Type
+	cmp		eax, 0			; 空地
+	je		L2
+
+	cmp		eax, 3			; 魔法塔
+	jne		L1
+
+	mov		eax, 1			; 魔法弹
 	mov		ecx, type BitmapInfo
 	mul		ecx
 	add		ebx, eax
 
+L1:
 	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
 	pop		edx
     push    edx
@@ -849,13 +857,29 @@ DrawBullet:
 			tcolor
     pop     edx
 	add		edx, TYPE Bullet
-
+L2:
 	mov		ecx, count
 	loop	DrawBullet
 
 DrawBulletExit:
 	ret
 PaintBullets ENDP
+
+;--------------------------------------------------
+UpdateWindmill PROC uses eax ebx
+;
+;--------------------------------------------------
+	mov		ebx, OFFSET windmill
+
+	mov		eax, (Animate PTR [ebx]).Gesture
+	inc		eax
+	.IF		eax > 7
+		mov	 eax, 0
+	.ENDIF
+	mov		(Animate PTR [ebx]).Gesture, eax
+
+	ret
+UpdateWindmill ENDP
 
 ;---------------------------------------------------
 DrawSingleAnimate PROC uses eax ecx edx 
@@ -887,13 +911,6 @@ DrawSingleAnimate PROC uses eax ecx edx
 			imgDC, 0, 0,
             (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
 			tcolor
-
-	mov		eax, (Animate PTR [ebx]).Gesture
-	inc		eax
-	.IF		eax > 7
-	mov		eax, 0
-	.ENDIF
-	mov		(Animate PTR [ebx]).Gesture, eax
 
 	ret
 DrawSingleAnimate ENDP
@@ -986,6 +1003,8 @@ AlreadyStarted:
 	; 画动画
 	mov     ebx, OFFSET windmill
 	INVOKE	DrawSingleAnimate
+	INVOKE  UpdateWindmill
+	INVOKE	PaintAnimates
 
 	; 画建塔提示圆圈
 	INVOKE	PaintSigns
