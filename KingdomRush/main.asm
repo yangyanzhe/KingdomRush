@@ -33,6 +33,14 @@ InitMapInfo PROTO
 TimerProc PROTO,
     hWnd: DWORD
 
+MouseMoveProc_Prepared PROTO,
+	hWnd: DWORD,
+    cursorPosition: Coord
+
+MouseMoveProc_Started PROTO,
+	hWnd: DWORD,
+	cursorPosition: Coord
+
 LMouseProc_Prepared PROTO,
 	hWnd: DWORD,
 	cursorPosition: Coord
@@ -183,9 +191,9 @@ WinProc PROC,
 	  mov     	cursorPosition.y, edx
       .IF wParam == MK_LBUTTON
         .IF Game.State == 0
-          ;INVOKE 	MouseMoveProc_Prepared, hWnd, cursorPosition
+          INVOKE 	MouseMoveProc_Prepared, hWnd, cursorPosition
         .ELSE
-		  ;INVOKE 	MouseMoveProc_Started, hWnd, cursorPosition
+		  INVOKE 	MouseMoveProc_Started, hWnd, cursorPosition
         .ENDIF
       .ENDIF
       jmp       WinProcExit
@@ -397,6 +405,24 @@ TimerProc PROC,
     INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
 TimerProc ENDP
+
+;-----------------------------------------------------------------------
+MouseMoveProc_Prepared PROC,
+	hWnd: DWORD,
+	cursorPosition: Coord
+;-----------------------------------------------------------------------
+
+    ret
+MouseMoveProc_Prepared ENDP
+
+;-----------------------------------------------------------------------
+MouseMoveProc_Started PROC,
+	hWnd: DWORD,
+	cursorPosition: Coord
+;-----------------------------------------------------------------------
+
+    ret
+MouseMoveProc_Started ENDP
 
 ;-----------------------------------------------------------------------
 LMouseProc_Prepared PROC,
