@@ -26,6 +26,8 @@ DirectionY      dd 1, 0, 0, 1
 Distance1    =   10
 Distance2    =   50
 Distance3    =   70
+AnimateTotal =   8
+
 .code
 ;==========================     Game      =============================
 ;----------------------------------------------------------------------     
@@ -316,6 +318,7 @@ SkipMove:
             INVOKE DeleteBullet, edi
             sub ebx, TYPE Bullet
             sub edi, 1
+            INVOKE InsertAnimate, (Bullet PTR [ebx]).Pos.x, (Bullet PTR [ebx]).Pos.y, 1
         .ENDIF
     .ENDIF
     add ebx, TYPE Bullet
@@ -648,11 +651,11 @@ FindAnimateLoop:
     .IF ecx == eax
         jmp FoundInsertedAnimatePosition
     .ENDIF
-FoundInsertedAnimatePosition:
     add ebx, TYPE Animate
     add eax, 1
     jmp FindAnimateLoop
 
+FoundInsertedAnimatePosition:
     mov eax, px
     mov (Animate PTR [ebx]).Pos.x, eax
     mov eax, py
@@ -710,7 +713,7 @@ DeleteAnimateExit:
 DeleteAnimate ENDP
 
 ;---------------------------------------------------------------------- 
-UpdateAnimate PROC
+UpdateAnimates PROC
 
 ;¸üÐÂ¶¯»­
 ;----------------------------------------------------------------------
@@ -723,13 +726,19 @@ UpdateAnimateLoop:
         jmp UpdateAnimateExit
     .ENDIF
     add (Animate PTR [ebx]).Gesture, 1
+    mov edx, (Animate PTR [ebx]).Gesture
+    .IF edx == AnimateTotal
+        INVOKE DeleteAnimate, eax
+        sub eax, 1
+        sub ebx, TYPE Animate
+    .ENDIF
     add ebx, TYPE Animate
     add eax, 1
     jmp UpdateAnimateLoop
 UpdateAnimateExit:
     popad
     ret
-UpdateAnimate ENDP
+UpdateAnimates ENDP
 
 ;==========================     Enemy     =============================
 ;----------------------------------------------------------------------   

@@ -370,6 +370,7 @@ TimerProc PROC,
     INVOKE UpdateEnemies
     INVOKE UpdateTowers
     INVOKE UpdateBullets
+    ; INVOKE UpdateAnimates
     INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
 TimerProc ENDP

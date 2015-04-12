@@ -87,4 +87,6 @@ InsertAnimate PROTO,
 DeleteAnimate PROTO,
     _AnimateNumber: DWORD
 
+UpdateAnimates PROTO
+
 ENDIF
