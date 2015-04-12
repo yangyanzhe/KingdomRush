@@ -33,7 +33,11 @@ InitMapInfo PROTO
 TimerProc PROTO,
     hWnd: DWORD
 
-LMouseProc PROTO,
+LMouseProc_Prepared PROTO,
+	hWnd: DWORD,
+	cursorPosition: Coord
+
+LMouseProc_Started PROTO,
 	hWnd: DWORD,
 	cursorPosition: Coord
 	
@@ -171,8 +175,21 @@ WinProc PROC,
 	
 	  jmp       WinProcExit
     .ELSEIF eax == WM_MOUSEMOVE     ; 鼠标移动事件
+      mov  	    ebx, lParam
+      movzx     edx, bx
+      mov     	cursorPosition.x, edx
+	  shr  	    ebx, 16
+      movzx     edx, bx
+	  mov     	cursorPosition.y, edx
+      .IF wParam == MK_LBUTTON
+        .IF Game.State == 0
+          ;INVOKE 	MouseMoveProc_Prepared, hWnd, cursorPosition
+        .ELSE
+		  ;INVOKE 	MouseMoveProc_Started, hWnd, cursorPosition
+        .ENDIF
+      .ENDIF
       jmp       WinProcExit
-    .ELSEIF eax == WM_LBUTTONUP     ; 鼠标点击事件
+    .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标点击事件
       mov  	    ebx, lParam
       movzx     edx, bx
       mov     	cursorPosition.x, edx
@@ -180,7 +197,11 @@ WinProc PROC,
       movzx     edx, bx
 	  mov     	cursorPosition.y, edx
 	  .IF wParam == MK_LBUTTON
-		INVOKE 	LMouseProc, hWnd, cursorPosition
+        .IF Game.State == 0
+          INVOKE 	LMouseProc_Prepared, hWnd, cursorPosition
+        .ELSE
+		  INVOKE 	LMouseProc_Started, hWnd, cursorPosition
+        .ENDIF
 	  .ENDIF
       jmp    	WinProcExit
     .ELSEIF eax == WM_CLOSE         ; 关闭窗口事件
@@ -203,10 +224,10 @@ WinProc ENDP
 
 ;---------------------------------------------------------
 LoadTypeImages PROC,
-        hInst: DWORD,
-        typeNum: DWORD,
-        typeHandler: DWORD,
-        typeID: DWORD
+    hInst: DWORD,
+    typeNum: DWORD,
+    typeHandler: DWORD,
+    typeID: DWORD
 ;
 ; As the load procedure are repeatable, remove the repeatable code here
 ;---------------------------------------------------------
@@ -378,7 +399,16 @@ TimerProc PROC,
 TimerProc ENDP
 
 ;-----------------------------------------------------------------------
-LMouseProc PROC,
+LMouseProc_Prepared PROC,
+	hWnd: DWORD,
+	cursorPosition: Coord
+;-----------------------------------------------------------------------
+
+    ret
+LMouseProc_Prepared ENDP
+
+;-----------------------------------------------------------------------
+LMouseProc_Started PROC,
 	hWnd: DWORD,
 	cursorPosition: Coord
 ;-----------------------------------------------------------------------
@@ -549,7 +579,7 @@ CheckClicked0:
 LMouseProcExit:
     INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
-LMouseProc ENDP
+LMouseProc_Started ENDP
 
 ;-----------------------------------------------------------------------
 PaintTowers PROC
@@ -866,7 +896,7 @@ PaintProc PROC,
     mov 	hOld, eax
 
     ; 判断是否处于等待页面
-    cmp     Game.State, 1
+    cmp     Game.State, 0
     jne     AlreadyStarted
 
     ; 游戏尚未开始
