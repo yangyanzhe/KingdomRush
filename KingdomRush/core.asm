@@ -285,9 +285,32 @@ UpdateBullets PROC
     .IF ecx == 0
         jmp UpdateBulletsExit
     .ENDIF
+    mov edi, 0
 Loop_BulletMove:
     INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    mov eax, (Bullet PTR [ebx]).Pos.x
+    mov esi, (Bullet PTR [ebx]).Target
+    mov edx, (Enemy PTR [esi]).Current_Pos.x
+    .IF eax == edx
+        mov eax, (Bullet PTR [ebx]).Pos.y
+        mov edx, (Enemy PTR [esi]).Current_Pos.y
+        .IF eax == edx
+            INVOKE DeleteBullet, edi
+            sub ebx, TYPE Bullet
+            sub edi, 1
+        .ENDIF
+    .ENDIF
     add ebx, TYPE Bullet
+    add edi, 1
     loop Loop_BulletMove
 UpdateBulletsExit:
     popad
@@ -485,7 +508,7 @@ BulletMove ENDP
 DeleteBullet PROC,
     _BulletNumber: DWORD
 ;删除一颗子弹
-;require: 子弹的编号
+;require: 子弹的编号（从0开始）
 ;----------------------------------------------------------------------
     pushad
     mov ebx, OFFSET Game.BulletArray

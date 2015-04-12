@@ -76,4 +76,7 @@ CreateBullet PROTO,
 BulletMove PROTO,
     pBullet: DWORD
 
+DeleteBullet PROTO,
+    _BulletNumber: DWORD
+
 ENDIF
