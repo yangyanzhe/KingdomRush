@@ -50,7 +50,7 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
 ;载入游戏信息
 ;----------------------------------------------------------------------
     INVOKE  LoadGameMap
-    mov     Game.State, 0
+    mov     Game.State, 1
     mov     Game.Player_Life, 20
     mov     Game.Player_Money, 220
     mov     Game.Start_Pos.x, 320
