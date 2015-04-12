@@ -281,58 +281,6 @@ UpdateTowersExit:
     ret
 UpdateTowers ENDP
 
-;----------------------------------------------------------------------   
-UpdateBullets PROC
-; 更新所有子弹的信息
-;---------------------------------------------------------------------- 
-    ;所有子弹进行移动
-    pushad
-    mov ebx, OFFSET Game.BulletArray
-    mov ecx, Game.Bullet_Num
-    .IF ecx == 8
-     mov ecx, ecx
-    .ENDIF
-    .IF ecx == 0
-        jmp UpdateBulletsExit
-    .ENDIF
-    mov edi, 0
-Loop_BulletMove:
-    mov eax, (Bullet PTR [ebx]).Step
-    .IF eax < 3
-        INVOKE BulletMove, ebx
-        inc (Bullet PTR [ebx]).Step
-        jmp SkipMove
-    .ENDIF
-    INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
-SkipMove:
-    mov eax, (Bullet PTR [ebx]).Pos.x
-    mov esi, (Bullet PTR [ebx]).Target
-    mov edx, (Enemy PTR [esi]).Current_Pos.x
-    .IF eax == edx
-        mov eax, (Bullet PTR [ebx]).Pos.y
-        mov edx, (Enemy PTR [esi]).Current_Pos.y
-        .IF eax == edx
-            INVOKE DeleteBullet, edi
-            sub ebx, TYPE Bullet
-            sub edi, 1
-            INVOKE InsertAnimate, (Bullet PTR [ebx]).Pos.x, (Bullet PTR [ebx]).Pos.y, 1
-        .ENDIF
-    .ENDIF
-    add ebx, TYPE Bullet
-    add edi, 1
-    loop Loop_BulletMove
-UpdateBulletsExit:
-    popad
-    ret
-UpdateBullets ENDP
-
 ;==========================     Tower     =============================
 ;----------------------------------------------------------------------   
 CreateTower PROC USES esi ebx ecx,
@@ -389,6 +337,10 @@ SearchAndAttack PROC,
 ;----------------------------------------------------------------------
     pushad
     mov esi, pTower
+    mov eax, (Tower PTR [esi]).Tower_Type
+    .IF eax == 0
+        jmp SearchEnemy_Exit
+    .ENDIF
     mov ecx, Game.Enemy_Num
     .IF ecx == 0
         jmp SearchEnemy_Exit
@@ -472,9 +424,106 @@ InsertBullet:
     mov (Bullet PTR [ebx]).Target, edi
     mov (Bullet PTR [ebx]).Gesture, 0
     mov (Bullet PTR [ebx]).Step, 0
+    mov eax, (Tower PTR [esi]).Attack
+    mov (Bullet PTR [ebx]).Attack, eax
     popad
     ret
 CreateBullet ENDP 
+
+;----------------------------------------------------------------------   
+UpdateBullets PROC
+; 更新所有子弹的信息
+;---------------------------------------------------------------------- 
+    ;所有子弹进行移动
+    pushad
+    mov ebx, OFFSET Game.BulletArray
+    mov ecx, Game.Bullet_Num
+    .IF ecx == 8
+     mov ecx, ecx
+    .ENDIF
+    .IF ecx == 0
+        jmp UpdateBulletsExit
+    .ENDIF
+    mov edi, 0
+Loop_BulletMove:
+    mov edx, (Bullet PTR [ebx]).Bullet_Type
+    .IF edx == 4
+        INVOKE BulletMoveBoom
+    .ELSE
+        INVOKE BulletMoveMagic
+    .ENDIF
+    mov eax, (Bullet PTR [ebx]).Pos.x
+    mov esi, (Bullet PTR [ebx]).Target
+    mov edx, (Enemy PTR [esi]).Current_Pos.x
+    .IF eax == edx
+        mov eax, (Bullet PTR [ebx]).Pos.y
+        mov edx, (Enemy PTR [esi]).Current_Pos.y
+        .IF eax == edx
+            mov eax, (Bullet PTR [ebx]).Attack
+            mov edx, (Enemy PTR [esi]).Current_Life
+            .IF edx < eax
+                mov edx, 0
+            .ELSEIF
+                sub edx, eax
+            .ENDIF
+            mov (Enemy PTR [esi]).Current_Life, edx
+            .IF edx == 0
+                INVOKE EnemyCheckDie
+            .ENDIF
+            mov eax, (Bullet PTR [ebx]).Bullet_Type
+            .IF eax == 4
+                mov edx, 1
+            .ELSE
+                mov edx, 2
+            .ENDIF
+            INVOKE InsertAnimate, (Bullet PTR [ebx]).Pos.x, (Bullet PTR [ebx]).Pos.y, edx
+            INVOKE DeleteBullet, edi
+            sub ebx, TYPE Bullet
+            sub edi, 1
+        .ENDIF
+    .ENDIF
+    add ebx, TYPE Bullet
+    add edi, 1
+    loop Loop_BulletMove
+UpdateBulletsExit:
+    popad
+    ret
+UpdateBullets ENDP
+
+BulletMoveBoom PROC
+    mov eax, (Bullet PTR [ebx]).Step
+    .IF eax < 3
+        INVOKE BulletMove, ebx
+        inc (Bullet PTR [ebx]).Step
+        jmp SkipMove
+    .ENDIF
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+SkipMove:
+    ret
+BulletMoveBoom ENDP
+
+BulletMoveMagic PROC
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    INVOKE BulletMove, ebx
+    ret
+BulletMoveMagic ENDP
 
 ;----------------------------------------------------------------------
 BulletMove PROC,
@@ -498,6 +547,25 @@ BulletMove PROC,
     mov eax, (Bullet PTR [esi]).Pos.y
     mov c_y, eax
     
+    mov edx, (Bullet PTR [esi]).Bullet_Type
+    .IF edx == 3
+        mov eax, c_x
+        mov edx, e_x
+        .IF eax < edx
+            add c_x, 1
+        .ELSEIF eax > edx
+            sub c_x, 1
+        .ENDIF
+
+        mov eax, c_y
+        mov edx, e_y
+        .IF eax < edx
+            add c_y, 1
+        .ELSEIF eax > edx
+            sub c_y, 1
+        .ENDIF
+        jmp BulletMoveExit
+    .ENDIF
     mov ebx, (Bullet PTR [esi]).Step
     .IF ebx < 3
         mov eax, c_x
@@ -580,7 +648,7 @@ BulletMove PROC,
             .ENDIF
         .ENDIF
     .ENDIF
-
+    jmp BulletMoveExit
 BulletMoveExit:
     mov eax, c_x
     mov (Bullet PTR [esi]).Pos.x, eax
@@ -629,6 +697,8 @@ MoveBulletArray:
     mov (Bullet PTR [ebx]).Step, eax
     mov eax, (Bullet PTR [esi]).Target
     mov (Bullet PTR [ebx]).Target, eax
+    mov eax, (Bullet PTR [esi]).Attack
+    mov (Bullet PTR [ebx]).Attack, eax
     pop eax
     inc eax
     jmp MoveBulletArray
@@ -723,9 +793,9 @@ UpdateAnimates PROC
 ;----------------------------------------------------------------------
     pushad
     mov ebx, OFFSET Game.AnimateArray
-    mov ecx, Game.Animate_Num
     mov eax, 0
 UpdateAnimateLoop:
+    mov ecx, Game.Animate_Num
     .IF ecx == eax
         jmp UpdateAnimateExit
     .ENDIF
@@ -955,8 +1025,11 @@ CheckAllDie:
     mov     edx, (Enemy PTR [edi]).Current_Life
     .IF edx == 0
         INVOKE DeleteEnemy, eax
+        sub ebx, TYPE DWORD
+        sub eax, 1
     .ENDIF
     add     ebx, TYPE DWORD
+    add     eax, 1
     loop    CheckAllDie
 EnemyCheckDie_Exit:
     ret
@@ -986,8 +1059,8 @@ EnemyQueueMoveForward:
     mov     [ebx], edi
     add     ebx, 4
     loop    EnemyQueueMoveForward
-    dec     Game.Enemy_Num
 DeleteEnemyExit:
+    dec     Game.Enemy_Num
     ret
 DeleteEnemy ENDP
 

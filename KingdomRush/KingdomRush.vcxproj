@@ -25,7 +25,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -106,6 +106,18 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resource\music\ah.wav" />
+    <Media Include="resource\music\arrow.wav" />
+    <Media Include="resource\music\bomb.wav" />
+    <Media Include="resource\music\bombShort.wav" />
+    <Media Include="resource\music\click.wav" />
+    <Media Include="resource\music\end.wav" />
+    <Media Include="resource\music\endRound.wav" />
+    <Media Include="resource\music\forHonorAndGlory.wav" />
+    <Media Include="resource\music\forTheKing.wav" />
+    <Media Include="resource\music\newRound.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

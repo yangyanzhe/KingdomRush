@@ -89,4 +89,8 @@ DeleteAnimate PROTO,
 
 UpdateAnimates PROTO
 
+BulletMoveBoom PROTO
+
+BulletMoveMagic PROTO
+
 ENDIF

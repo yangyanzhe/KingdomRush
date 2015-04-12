@@ -530,7 +530,8 @@ TimerProc_Started PROC,
     INVOKE UpdateEnemies
     INVOKE UpdateTowers
     INVOKE UpdateBullets
-    ; INVOKE UpdateAnimates
+    INVOKE UpdateAnimates
+    INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
 TimerProc_Started ENDP
 
@@ -725,6 +726,15 @@ CheckSignClicked0:
         ja   CheckSignClicked1
 
         mov  (Tower PTR [ebx]).Tower_Type, edi
+        .IF edi == 1
+            mov  (Tower PTR [ebx]).Attack, 10
+        .ELSEIF edi == 2
+            mov  (Tower PTR [ebx]).Attack, 10
+        .ELSEIF edi == 3
+            mov  (Tower PTR [ebx]).Attack, 20
+        .ELSE
+            mov  (Tower PTR [ebx]).Attack, 15
+        .ENDIF
         jmp  CheckSignClicked2
 CheckSignClicked1:
         add  edx, TYPE BitmapInfo
@@ -1057,10 +1067,18 @@ DrawBullet:
     mov		count, ecx
     mov     ebx, OFFSET bulletHandler
 	mov		eax, (Bullet PTR [edx]).Bullet_Type
+	cmp		eax, 0			; ø’µÿ
+	je		L2
+
+	cmp		eax, 3			; ƒß∑®À˛
+	jne		L1
+
+	mov		eax, 1			; ƒß∑®µØ
 	mov		ecx, type BitmapInfo
 	mul		ecx
 	add		ebx, eax
 
+L1:
 	INVOKE  SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
 	pop		edx
     push    edx
@@ -1072,7 +1090,7 @@ DrawBullet:
 			tcolor
     pop     edx
 	add		edx, TYPE Bullet
-
+L2:
 	mov		ecx, count
 	loop	DrawBullet
 
@@ -1080,23 +1098,54 @@ DrawBulletExit:
 	ret
 PaintBullets ENDP
 
-;---------------------------------------------------
-PaintAnimates PROC uses eax ebx ecx edx 
+;--------------------------------------------------
+UpdateWindmill PROC uses eax ebx
 ;
+;--------------------------------------------------
+	mov		ebx, OFFSET windmill
+
+	mov		eax, (Animate PTR [ebx]).Gesture
+	inc		eax
+	.IF		eax > 7
+		mov	 eax, 0
+	.ENDIF
+	mov		(Animate PTR [ebx]).Gesture, eax
+
+	ret
+UpdateWindmill ENDP
+
 ;---------------------------------------------------
+DrawSingleAnimate PROC uses eax ecx edx 
+; 
+;	ebx-offset animate
+;---------------------------------------------------
+	Local	animateT:DWORD
+	Local	gesture:DWORD
+
 	mov		eax, 0
-	mov		ebx, 0
-	; get the struct-Animate
-	mov     ebx, OFFSET testAnimate
 
 	; get the image
     mov     edx, OFFSET animateHandler
 	push	edx
 	
 	mov		eax, (Animate PTR [ebx]).Animate_Type
+	mov		animateT, eax
 	mov		ecx, 8
 	mul		ecx
 	add		eax, (Animate PTR [ebx]).Gesture
+	mov		ecx, (Animate PTR [ebx]).Gesture
+	mov		gesture, ecx
+
+	pushad
+	.IF	gesture == 1
+		.IF		animateT == 1			; º”…œ’®µØ…˘“Ù
+			INVOKE	PlaySound, OFFSET BombFileName, 0, SND_ASYNC
+		.ELSEIF	animateT == 2
+			INVOKE  PlaySound, OFFSET AhFileName, 0, SND_ASYNC
+		.ENDIF
+	.ENDIF
+	popad
+
 	mov		ecx, type BitmapInfo
 	mul		ecx
 
@@ -1113,13 +1162,30 @@ PaintAnimates PROC uses eax ebx ecx edx
             (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
 			tcolor
 
-	mov		eax, (Animate PTR [ebx]).Gesture
-	inc		eax
-	.IF		eax > 7
-	mov		eax, 0
-	.ENDIF
-	mov		(Animate PTR [ebx]).Gesture, eax
+	ret
+DrawSingleAnimate ENDP
 
+;---------------------------------------------------
+PaintAnimates PROC uses eax ebx ecx edx 
+;
+;---------------------------------------------------
+	mov		eax, 0
+	mov		ebx, 0
+
+	mov		ecx, Game.Animate_Num
+	cmp		ecx, 0
+	je		PaintAnimatesExit
+
+	; get the struct-Animate
+	mov     ebx, OFFSET Game.AnimateArray
+L1:
+	push	ecx
+	INVOKE	DrawSingleAnimate
+	add		ebx, TYPE Animate
+	pop		ecx
+	loop	L1
+
+PaintAnimatesExit:
 	ret
 PaintAnimates ENDP
 
@@ -1256,6 +1322,9 @@ AlreadyStarted:
 	INVOKE  PaintBullets
 
 	; ª≠∂Øª≠
+	mov     ebx, OFFSET windmill
+	INVOKE	DrawSingleAnimate
+	INVOKE  UpdateWindmill
 	INVOKE	PaintAnimates
 
 	; ª≠Ω®À˛Ã· æ‘≤»¶

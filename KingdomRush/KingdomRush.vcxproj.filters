@@ -94,4 +94,44 @@
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="images\StartBG.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="patches\Board.png">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="resource\music\ah.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\arrow.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\bomb.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\bombShort.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\click.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\end.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\endRound.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\forHonorAndGlory.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\forTheKing.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="resource\music\newRound.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+  </ItemGroup>
 </Project>

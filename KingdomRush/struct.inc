@@ -51,6 +51,7 @@ Bullet struct
     Target              dd ?
     Gesture             dd ?
     Step                dd ?
+    Attack              dd ?
 Bullet ends
 
 Animate struct
