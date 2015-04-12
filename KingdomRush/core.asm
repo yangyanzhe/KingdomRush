@@ -316,9 +316,9 @@ SkipMove:
         mov edx, (Enemy PTR [esi]).Current_Pos.y
         .IF eax == edx
             INVOKE DeleteBullet, edi
+            INVOKE InsertAnimate, (Bullet PTR [ebx]).Pos.x, (Bullet PTR [ebx]).Pos.y, 1
             sub ebx, TYPE Bullet
             sub edi, 1
-            INVOKE InsertAnimate, (Bullet PTR [ebx]).Pos.x, (Bullet PTR [ebx]).Pos.y, 1
         .ENDIF
     .ENDIF
     add ebx, TYPE Bullet
@@ -719,9 +719,9 @@ UpdateAnimates PROC
 ;----------------------------------------------------------------------
     pushad
     mov ebx, OFFSET Game.AnimateArray
-    mov ecx, Game.Animate_Num
     mov eax, 0
 UpdateAnimateLoop:
+    mov ecx, Game.Animate_Num
     .IF ecx == eax
         jmp UpdateAnimateExit
     .ENDIF
