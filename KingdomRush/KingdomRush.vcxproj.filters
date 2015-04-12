@@ -94,23 +94,4 @@
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="images\StartBG.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="patches\Board.png">
-      <Filter>资源文件</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <Media Include="resource\music\background01.mp3">
-      <Filter>资源文件</Filter>
-    </Media>
-    <Media Include="resource\music\background02.mp3">
-      <Filter>资源文件</Filter>
-    </Media>
-    <Media Include="resource\music\start.mp3">
-      <Filter>资源文件</Filter>
-    </Media>
-  </ItemGroup>
 </Project>
