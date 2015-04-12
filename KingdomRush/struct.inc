@@ -50,6 +50,7 @@ Bullet struct
     Pos                 Coord <>
     Target              dd ?
     Gesture             dd ?
+    Step                dd ?
 Bullet ends
 
 Animate struct

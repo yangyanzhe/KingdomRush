@@ -336,7 +336,7 @@ InitMapInfo PROC
     mov     edx, OFFSET Game.TowerArray
 InitTower:  
     mov     (Tower PTR [edx]).Tower_Type, 0     ;ËþµÄ³õÊ¼ÀàÐÍÎª0£¨¿ÕµØ£©
-    mov     (Tower PTR [edx]).Range, 100        ;ËþµÄ¹¥»÷·¶Î§
+    mov     (Tower PTR [edx]).Range, 80        ;ËþµÄ¹¥»÷·¶Î§
     mov     eax, (Coord PTR [ebx]).x
     mov     (Tower PTR [edx]).Pos.x, eax
     mov     eax, (Coord PTR [ebx]).y

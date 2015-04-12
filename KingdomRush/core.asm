@@ -23,13 +23,16 @@ fileHandle      HANDLE ?
 DirectionX      dd 0, 1, 1, 0
 DirectionY      dd 1, 0, 0, 1
 
+Distance1    =   10
+Distance2    =   50
+Distance3    =   70
 .code
 ;==========================     Game      =============================
 ;----------------------------------------------------------------------     
 UpdateTimer PROC
     inc     Game.Tick
     inc     Game.TowerTick
-    .IF Game.TowerTick == 100
+    .IF Game.TowerTick == 50
         mov Game.TowerTick, 0
     .ENDIF
     ;mov     eax, Game.Tick
@@ -287,6 +290,12 @@ UpdateBullets PROC
     .ENDIF
     mov edi, 0
 Loop_BulletMove:
+    mov eax, (Bullet PTR [ebx]).Step
+    .IF eax < 3
+        INVOKE BulletMove, ebx
+        inc (Bullet PTR [ebx]).Step
+        jmp SkipMove
+    .ENDIF
     INVOKE BulletMove, ebx
     INVOKE BulletMove, ebx
     INVOKE BulletMove, ebx
@@ -295,8 +304,7 @@ Loop_BulletMove:
     INVOKE BulletMove, ebx
     INVOKE BulletMove, ebx
     INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
-    INVOKE BulletMove, ebx
+SkipMove:
     mov eax, (Bullet PTR [ebx]).Pos.x
     mov esi, (Bullet PTR [ebx]).Target
     mov edx, (Enemy PTR [esi]).Current_Pos.x
@@ -455,6 +463,7 @@ InsertBullet:
     mov (Bullet PTR [ebx]).Pos.y, eax
     mov (Bullet PTR [ebx]).Target, edi
     mov (Bullet PTR [ebx]).Gesture, 0
+    mov (Bullet PTR [ebx]).Step, 0
     popad
     ret
 CreateBullet ENDP 
@@ -481,22 +490,90 @@ BulletMove PROC,
     mov eax, (Bullet PTR [esi]).Pos.y
     mov c_y, eax
     
+    mov ebx, (Bullet PTR [esi]).Step
+    .IF ebx < 3
+        mov eax, c_x
+        mov edx, e_x
+        .IF eax < edx
+            add c_x, 10
+        .ELSEIF eax > edx
+            sub c_x, 10
+        .ENDIF
+
+        sub c_y, 20
+        jmp BulletMoveExit
+    .ENDIF
+
     mov eax, c_x
     mov edx, e_x
     .IF eax < edx
-        inc c_x
+        mov edi, edx
+        sub edi, Distance1
+        .IF eax > edi
+            mov eax, e_x
+            mov c_x, eax
+        .ELSE
+            sub edi, Distance2
+            .IF eax > edi
+                add c_x, 1
+            .ELSE
+                add c_x, 1
+            .ENDIF
+        .ENDIF
     .ELSEIF eax > edx
-        dec c_x
+        mov edi, edx
+        add edi, Distance1
+        .IF eax < edi
+            mov eax, e_x
+            mov c_x, eax
+        .ELSE
+            add edi, Distance2
+            .IF eax < edi
+                sub c_x, 1
+            .ELSE
+                sub c_x, 1
+            .ENDIF
+        .ENDIF
     .ENDIF
 
     mov eax, c_y
     mov edx, e_y
     .IF eax < edx
-        inc c_y
+        mov edi, edx
+        sub edi, Distance1
+        .IF eax > edi
+            mov eax, e_y
+            mov c_y, eax
+        .ELSE
+            sub edi, Distance2
+            .IF eax > edi
+                add c_y, 3
+            .ELSE
+                sub edi, Distance3
+                .IF eax > edi
+                    add c_y, 2
+                .ELSE
+                    add c_y, 1
+                .ENDIF
+            .ENDIF
+        .ENDIF
     .ELSEIF eax > edx
-        dec c_y
+        mov edi, edx
+        add edi, Distance1
+        .IF eax < edi
+            mov eax, e_y
+            mov c_y, eax
+        .ELSE
+            add edi, Distance2
+            .IF eax < edi
+                sub c_y, 2
+            .ELSE
+                sub c_y, 1
+            .ENDIF
+        .ENDIF
     .ENDIF
 
+BulletMoveExit:
     mov eax, c_x
     mov (Bullet PTR [esi]).Pos.x, eax
     mov eax, c_y
@@ -539,6 +616,8 @@ MoveBulletArray:
     mov (Bullet PTR [ebx]).Pos.y, eax
     mov eax, (Bullet PTR [esi]).Gesture
     mov (Bullet PTR [ebx]).Gesture, eax
+    mov eax, (Bullet PTR [esi]).Step
+    mov (Bullet PTR [ebx]).Step, eax
     mov eax, (Bullet PTR [esi]).Target
     mov (Bullet PTR [ebx]).Target, eax
     pop eax
