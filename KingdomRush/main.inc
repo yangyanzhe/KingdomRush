@@ -31,11 +31,11 @@ PlayFlag    dd 0
 Mp3Files    db "*.mp3",125 dup (0)
 Mp3Device   db "MPEGVideo",0
 Mp3BombDeviceID dd 0
-BombSoundTime dd 0
-Mp3BombDevice   db "MPEGVideo",0
 
 MusicFileName db 'resource/music/background01.mp3', 0
 StartFileName db 'resource/music/start.mp3', 0
+ClickFileName db 'resource/music/click.wav', 0
+BombFileName  db 'resource/music/bomb.wav', 0
 
 instructionNum  = 4
 buttonNum       = 4

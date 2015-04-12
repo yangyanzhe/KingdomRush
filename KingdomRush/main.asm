@@ -886,6 +886,9 @@ DrawSingleAnimate PROC uses eax ecx edx
 ; 
 ;	ebx-offset animate
 ;---------------------------------------------------
+	Local	animateT:DWORD
+	Local	gesture:DWORD
+
 	mov		eax, 0
 
 	; get the image
@@ -893,9 +896,21 @@ DrawSingleAnimate PROC uses eax ecx edx
 	push	edx
 	
 	mov		eax, (Animate PTR [ebx]).Animate_Type
+	mov		animateT, eax
 	mov		ecx, 8
 	mul		ecx
 	add		eax, (Animate PTR [ebx]).Gesture
+	mov		ecx, (Animate PTR [ebx]).Gesture
+	mov		gesture, ecx
+
+	pushad
+	.IF		animateT == 1			; º”…œ’®µØ…˘“Ù
+		.IF	gesture == 1
+			INVOKE	PlaySound, OFFSET BombFileName, 0, SND_ASYNC
+		.ENDIF
+	.ENDIF
+	popad
+
 	mov		ecx, type BitmapInfo
 	mul		ecx
 
