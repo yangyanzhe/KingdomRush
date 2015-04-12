@@ -37,6 +37,8 @@ Mp3BombDevice   db "MPEGVideo",0
 MusicFileName db 'resource/music/background01.mp3', 0
 StartFileName db 'resource/music/start.mp3', 0
 
+instructionNum  = 4
+buttonNum       = 4
 mapNum      	= 1
 towerNum    	= 5
 signNum         = 8
@@ -46,24 +48,28 @@ monsterNum	 	= 1
 bulletNum		= 2
 animateNum    	= 16
 
-mapHandler      BitmapInfo mapNum DUP(<>)
-blankSet        PositionSet mapNum DUP(<>)
-signHandler     BitmapInfo signNum DUP(<>)
-towerHandler    BitmapInfo towerNum DUP(<>)
-bulletHandler   BitmapInfo bulletNum DUP(<>) 
-animateHandler  BitmapInfo animateNum DUP(<>) 
-monsterHandler  MonsterBitmapInfo monsterNum DUP(<>)
+instructionHandler  BitmapInfo instructionNum DUP(<>)
+buttonHandler       BitmapInfo buttonNum DUP(<>)
+mapHandler          BitmapInfo mapNum DUP(<>)
+blankSet            PositionSet mapNum DUP(<>)
+signHandler         BitmapInfo signNum DUP(<>)
+towerHandler        BitmapInfo towerNum DUP(<>)
+monsterHandler      MonsterBitmapInfo monsterNum DUP(<>)
+bulletHandler       BitmapInfo bulletNum DUP(<>)
+animateHandler      BitmapInfo animateNum DUP(<>)
+testAnimate		    Animate <0, <500, 250>, 0>
 
-testAnimate		Animate <0, <500, 250>, 0>
-
-IDI_ICON        EQU 101
-IDB_MAP         EQU 102
-IDB_MAPONE      EQU 102
-
-blankIndex      dd 0, 8
-blankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>, 
-                      <300, 390>, <420, 390>, <340, 500>, <550, 480>
-signPosition	Coord <0, 0>, <34, 0>, <34, 105>, <86, 51>, <-15, 51>
+IDI_ICON                EQU 101
+IDB_INSTRUCTION         EQU 102
+IDB_START               EQU 102
+IDB_INSTRUCTION1        EQU 103
+IDB_INSTRUCTION2        EQU 104
+IDB_INSTRUCTION3        EQU 105
+IDB_BUTTON              EQU 106
+IDB_START_BUTTON        EQU 106
+IDB_INSTRUCTION_BUTTON1 EQU 107
+IDB_INSTRUCTION_BUTTON2 EQU 108
+IDB_INSTRUCTION_BUTTON3 EQU 109
 
 IDB_SIGN        EQU 110
 IDB_BLANKSIGN   EQU 110
@@ -109,6 +115,15 @@ IDB_ANIMATE_DD14	EQU 152
 IDB_ANIMATE_DD15	EQU 153
 IDB_ANIMATE_DD16	EQU 154
 IDB_ANIMATE_DD17	EQU 155
+
+; 地图
+IDB_MAP         EQU 190
+IDB_MAPONE      EQU 191
+
+blankIndex      dd 0, 8
+blankPosition   Coord <200, 200>, <140, 230>, <220, 335>, <210, 380>, 
+                      <300, 390>, <420, 390>, <340, 500>, <550, 480>
+signPosition	Coord <0, 0>, <34, 0>, <34, 105>, <86, 51>, <-15, 51>
 
 ; Monster编号规则：ID+方向+状态
 ; 例如：101表示ID：1，方向：0，状态：1

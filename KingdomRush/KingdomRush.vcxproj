@@ -92,6 +92,9 @@
     <None Include="resource\images\tower\sodier_sign.bmp" />
     <None Include="resource\images\tower\turret.bmp" />
     <None Include="resource\images\tower\turret_sign.bmp" />
+    <None Include="resource\music\background01.mp3" />
+    <None Include="resource\music\background02.mp3" />
+    <None Include="resource\music\start.mp3" />
     <None Include="struct.inc" />
   </ItemGroup>
   <ItemGroup>
