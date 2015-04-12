@@ -465,8 +465,14 @@ Loop_BulletMove:
             mov (Enemy PTR [esi]).Current_Life, edx
             .IF edx == 0
                 INVOKE EnemyCheckDie
-            .ENDIF    
-            INVOKE InsertAnimate, (Bullet PTR [ebx]).Pos.x, (Bullet PTR [ebx]).Pos.y, 1
+            .ENDIF
+            mov eax, (Bullet PTR [ebx]).Bullet_Type
+            .IF eax == 4
+                mov edx, 1
+            .ELSE
+                mov edx, 2
+            .ENDIF
+            INVOKE InsertAnimate, (Bullet PTR [ebx]).Pos.x, (Bullet PTR [ebx]).Pos.y, edx
             INVOKE DeleteBullet, edi
             sub ebx, TYPE Bullet
             sub edi, 1
