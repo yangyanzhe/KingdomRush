@@ -79,4 +79,12 @@ BulletMove PROTO,
 DeleteBullet PROTO,
     _BulletNumber: DWORD
 
+InsertAnimate PROTO,
+    px: DWORD,
+    py: DWORD,
+    _Type: DWORD
+
+DeleteAnimate PROTO,
+    _AnimateNumber: DWORD
+
 ENDIF

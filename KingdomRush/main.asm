@@ -797,9 +797,9 @@ PaintAnimates PROC uses eax ebx ecx edx
     mov     edx, OFFSET animateHandler
 	push	edx
 	
-	mov		ax, (Animate PTR [ebx]).Animate_Type
-	mov		cx, 8
-	mul		cx
+	mov		eax, (Animate PTR [ebx]).Animate_Type
+	mov		ecx, 8
+	mul		ecx
 	add		eax, (Animate PTR [ebx]).Gesture
 	mov		ecx, type BitmapInfo
 	mul		ecx
