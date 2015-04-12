@@ -502,6 +502,15 @@ CheckSignClicked0:
         ja   CheckSignClicked1
 
         mov  (Tower PTR [ebx]).Tower_Type, edi
+        .IF edi == 1
+            mov  (Tower PTR [ebx]).Attack, 10
+        .ELSEIF edi == 2
+            mov  (Tower PTR [ebx]).Attack, 10
+        .ELSEIF edi == 3
+            mov  (Tower PTR [ebx]).Attack, 20
+        .ELSE
+            mov  (Tower PTR [ebx]).Attack, 15
+        .ENDIF
         jmp  CheckSignClicked2
 CheckSignClicked1:
         add  edx, TYPE BitmapInfo
