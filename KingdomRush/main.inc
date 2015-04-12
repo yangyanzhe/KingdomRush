@@ -47,7 +47,7 @@ blankSignNum    = 5
 towerSignNum    = 3
 monsterNum	 	= 1
 bulletNum		= 2
-animateNum    	= 17
+animateNum    	= 24
 
 instructionHandler  BitmapInfo instructionNum DUP(<>)
 buttonHandler       BitmapInfo buttonNum DUP(<>)
@@ -58,7 +58,7 @@ towerHandler        BitmapInfo towerNum DUP(<>)
 monsterHandler      MonsterBitmapInfo monsterNum DUP(<>)
 bulletHandler       BitmapInfo bulletNum DUP(<>)
 animateHandler      BitmapInfo animateNum DUP(<>)
-windmill		    Animate <2, <500, 250>, 7>
+windmill		    Animate <0, <500, 250>, 0>
 
 IDI_ICON                EQU 101
 IDB_INSTRUCTION         EQU 102

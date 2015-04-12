@@ -899,9 +899,7 @@ DrawSingleAnimate PROC uses eax ecx edx
 	mov		animateT, eax
 	mov		ecx, 8
 	mul		ecx
-	.IF		animateT < 2
-		add		eax, (Animate PTR [ebx]).Gesture
-	.ENDIF
+	add		eax, (Animate PTR [ebx]).Gesture
 	mov		ecx, (Animate PTR [ebx]).Gesture
 	mov		gesture, ecx
 
