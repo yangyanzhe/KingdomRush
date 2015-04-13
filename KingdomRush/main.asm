@@ -205,6 +205,9 @@ WinProc PROC,
         .ENDIF
 	  .ENDIF
       jmp    	WinProcExit
+    .ELSEIF eax == MM_MCINOTIFY     ; 音乐循环播放
+      INVOKE    PlayMp3File, hWnd, ADDR MusicFileName
+      jmp    	WinProcExit
     .ELSEIF eax == WM_CLOSE         ; 关闭窗口事件
       INVOKE 	PostQuitMessage, 0
       jmp    	WinProcExit
@@ -1360,13 +1363,13 @@ PaintProcExit:
 PaintProc ENDP
 
 ;----------------------------------------------------------------------
-PlayMp3File PROC hWin:DWORD, NameOfFile:DWORD
+PlayMp3File PROC hWnd:DWORD, NameOfFile:DWORD
 ;
 ; 播放音乐函数
 ;----------------------------------------------------------------------
 	LOCAL   mciOpenParms:MCI_OPEN_PARMS, mciPlayParms:MCI_PLAY_PARMS
 
-	mov     eax, hWin        
+	mov     eax, hWnd        
 	mov     mciPlayParms.dwCallback,eax
 	mov     eax, OFFSET Mp3Device
 	mov     mciOpenParms.lpstrDeviceType, eax
