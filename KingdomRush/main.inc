@@ -21,6 +21,16 @@ hDC		        dd ?
 memDC	        dd ?
 imgDC	        dd ?
 
+; ×ÖÌå
+textFont		HFONT ?
+textArrayA		db 8 DUP (0)
+textLife		db 8 DUP (0)
+textMoney		db 8 DUP (0)
+textWave		db 8 DUP (0)
+textWave2		db "/",0
+textWave3		db 8 DUP (0)
+FontName		db "Arial", 0
+
 ; Í¼Æ¬×ÊÔ´
 tcolor	        dd 0FFFFFFh				; transparent color
 

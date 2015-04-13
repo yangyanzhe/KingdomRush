@@ -86,6 +86,23 @@ WinMain PROC
     ; 加载图片
 	INVOKE  InitImages, hInstance 
 
+	; 创建文字
+	INVOKE CreateFont, 16,
+                    0,
+                    0,
+                    0,
+                    FW_EXTRABOLD,
+                    FALSE,
+                    FALSE,
+                    FALSE,
+                    DEFAULT_CHARSET,
+                    OUT_TT_PRECIS,
+                    CLIP_DEFAULT_PRECIS,
+                    CLEARTYPE_QUALITY,
+                    DEFAULT_PITCH or FF_DONTCARE,
+                    OFFSET FontName
+    mov textFont, eax
+
 	; 初始化窗口
     mov     wndClass.cbSize, SIZEOF WNDCLASSEX
     mov     wndClass.hbrBackground, COLOR_WINDOW + 1
@@ -1214,6 +1231,118 @@ PaintAnimatesExit:
 	ret
 PaintAnimates ENDP
 
+;--------------------------------------------------------------
+TransferNumToString PROC,
+	arrayOffset: DWORD
+;	
+;	Receives: eax num to transfer
+;	Returns: none but change the array which pointed by arrayOffset
+;--------------------------------------------------------------
+	Local num:DWORD
+	Local arraySize:BYTE
+	
+	push ecx
+	push esi
+	push edi
+
+	mov	num, eax
+	mov cl, 10
+	mov ch, 0
+	mov esi, OFFSET textArrayA
+L1:
+	mov ah, 0
+	div cl
+	
+	.IF al == 0
+		.IF ah == 0
+			mov arraySize, ch
+			mov ch, 0
+			jmp L2
+		.ENDIF
+	.ENDIF
+
+	add ah, '0'
+	mov [esi], ah
+	add	esi, type byte
+
+	inc ch
+	jmp L1
+
+
+L2:
+	mov edi, arrayOffset
+	mov al, 48
+	.IF arraySize == 0
+		mov [edi], al
+		jmp L4
+	.ENDIF
+
+L3:
+	cmp ch, arraySize
+	jae  L4
+
+	sub	esi, type byte
+	mov al, [esi]
+	mov [edi], al
+
+	add	edi, type byte
+	inc ch
+	cmp ch, arraySize
+	jbe L3
+
+L4:
+	pop edi
+	pop esi
+	pop ecx
+	ret
+TransferNumToString ENDP
+
+;---------------------------------------------------------------
+PaintText PROC 
+;
+;	draw blood, count and wave
+;---------------------------------------------------------------
+	LOCAL textRect: RECT
+	pushad
+
+	INVOKE SetBkMode, memDC, TRANSPARENT
+	INVOKE SetTextColor, memDC, 0ffffffh
+	INVOKE SelectObject, memDC, textFont
+
+	; life
+	mov eax, Game.Player_Life
+	INVOKE TransferNumToString, ADDR textLife
+	mov textRect.top, 17
+	mov textRect.left, 60
+	mov textRect.right, 300
+	mov textRect.bottom, 200
+	INVOKE DrawText, memDC, ADDR textLife, -1, ADDR textRect, DT_VCENTER
+
+	; money
+	mov eax, Game.Player_Money
+	INVOKE TransferNumToString, ADDR textMoney
+	mov textRect.left, 110
+	INVOKE DrawText, memDC, ADDR textMoney, -1, ADDR textRect, DT_VCENTER
+
+	; wave
+	mov eax, Game.Now_Round
+	INVOKE TransferNumToString, ADDR textWave
+	mov textRect.top, 42
+	mov textRect.left, 104
+	INVOKE DrawText, memDC, ADDR textWave, -1, ADDR textRect, DT_VCENTER
+
+	mov textRect.left, 115
+	INVOKE DrawText, memDC, ADDR textWave2, -1, ADDR textRect, DT_VCENTER
+
+	mov eax, Game.Round_Num
+	INVOKE TransferNumToString, ADDR textWave3
+	mov textRect.left, 125
+	INVOKE DrawText, memDC, ADDR textWave3, -1, ADDR textRect, DT_VCENTER
+
+	popad
+	ret
+PaintText ENDP
+
 ;-----------------------------------------------------------------------
 PaintProc PROC,
 	hWnd:DWORD
@@ -1342,6 +1471,9 @@ AlreadyStarted:
 
 	; 画空地，塔
     INVOKE  PaintTowers
+
+	; 画文字
+	INVOKE	PaintText
 
 	; 画兵
 
