@@ -937,6 +937,7 @@ DrawMonsters:
     mov     eax, (Enemy PTR [ebx]).Current_Pos.x
     mov     x, eax
     INVOKE  MoveToEx, memDC, x, y, NULL
+    mov     edx, hMonster
     mov     eax, (BitmapInfo PTR [edx]).bWidth
     mul     WORD PTR (Enemy PTR [ebx]).Current_Life
     div     WORD PTR (Enemy PTR [ebx]).Total_Life
