@@ -95,4 +95,6 @@ BulletMoveMagic PROTO
 AOEAttack PROTO,
     pBullet: DWORD
 
+AddMoney PROTO,
+    Money: DWORD
 ENDIF
