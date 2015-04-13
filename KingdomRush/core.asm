@@ -108,6 +108,7 @@ Initialize_Round_Loop:
 
         mov     eax, ENEMY_LIFE_0
         mov     (Enemy PTR [edi]).Current_Life, eax
+        mov     (Enemy PTR [edi]).Total_Life, eax
 
         mov     eax, ENEMY_MONEY_0
         mov     (Enemy PTR [edi]).Money, eax
