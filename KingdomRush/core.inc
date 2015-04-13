@@ -6,16 +6,14 @@ INCLUDE     struct.inc
 .data
 EXTERNDEF Game: GameInfo
 
-ROUND_NUMBER dd 5
-ROUND_TRIGGER_TIME dd 30, 300, 600, 900, 1200
-EACH_ROUND_ENEMY_NUMBER dd 3,4,5,6,10
+ROUND_NUMBER dd 3
+ROUND_TRIGGER_TIME dd 30, 200, 400
+EACH_ROUND_ENEMY_NUMBER dd 3,4,10
 EACH_ROUND_ENEMY_TYPE dd 0,0,0,
                          0,0,0,0,
-                         0,0,0,0,0,
-                         0,0,0,0,0,0, 
                          10 dup(0)
 
-APPEAR_INTERVAL dd 30, 30, 30, 30, 10
+APPEAR_INTERVAL dd 30, 30, 10
 ENEMY_LIFE_0 = 40
 ENEMY_MONEY_0 = 10
 
@@ -93,5 +91,8 @@ UpdateAnimates PROTO
 BulletMoveBoom PROTO
 
 BulletMoveMagic PROTO
+
+AOEAttack PROTO,
+    pBullet: DWORD
 
 ENDIF
