@@ -422,8 +422,10 @@ InsertBullet:
     .ENDIF
     mov (Bullet PTR [ebx]).Bullet_Type, eax
     mov eax, (Tower PTR [esi]).Pos.x
+    add eax, 20 ;Î¢µ÷
     mov (Bullet PTR [ebx]).Pos.x, eax
     mov eax, (Tower PTR [esi]).Pos.y
+    sub eax, 20 ;Î¢µ÷
     mov (Bullet PTR [ebx]).Pos.y, eax
     mov (Bullet PTR [ebx]).Target, edi
     mov (Bullet PTR [ebx]).Gesture, 0
@@ -495,7 +497,7 @@ UpdateBullets ENDP
 
 BulletMoveBoom PROC
     mov eax, (Bullet PTR [ebx]).Step
-    .IF eax < 3
+    .IF eax < 4
         INVOKE BulletMove, ebx
         inc (Bullet PTR [ebx]).Step
         jmp SkipMove
@@ -570,13 +572,13 @@ BulletMove PROC,
         jmp BulletMoveExit
     .ENDIF
     mov ebx, (Bullet PTR [esi]).Step
-    .IF ebx < 3
+    .IF ebx < 4
         mov eax, c_x
         mov edx, e_x
         .IF eax < edx
-            add c_x, 10
+            add c_x, 5
         .ELSEIF eax > edx
-            sub c_x, 10
+            sub c_x, 5
         .ENDIF
 
         sub c_y, 20
@@ -626,13 +628,13 @@ BulletMove PROC,
         .ELSE
             sub edi, Distance2
             .IF eax > edi
-                add c_y, 3
+                add c_y, 4
             .ELSE
                 sub edi, Distance3
                 .IF eax > edi
-                    add c_y, 2
+                    add c_y, 3
                 .ELSE
-                    add c_y, 1
+                    add c_y, 2
                 .ENDIF
             .ENDIF
         .ENDIF
