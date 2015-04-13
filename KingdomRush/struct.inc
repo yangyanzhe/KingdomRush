@@ -29,6 +29,7 @@ Enemy struct
     Current_Pos			Coord <>
     Current_Dir 		dd ?
     Current_Life		dd ?
+    Total_Life          dd ?
     Money				dd ?
     Gesture             dd ?
     Station             dd ?
