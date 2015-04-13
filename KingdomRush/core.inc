@@ -2,19 +2,20 @@ IFNDEF CORE_INC
 CORE_INC     equ <2>
 
 INCLUDE     struct.inc
-INCLUDE     data.inc
 
 .data
 EXTERNDEF Game: GameInfo
 
-ROUND_NUMBER dd 4
-ROUND_TRIGGER_TIME dd 30, 300, 600, 900
-EACH_ROUND_ENEMY_NUMBER dd 3,4,5,6
+ROUND_NUMBER dd 5
+ROUND_TRIGGER_TIME dd 30, 300, 600, 900, 1200
+EACH_ROUND_ENEMY_NUMBER dd 3,4,5,6,10
 EACH_ROUND_ENEMY_TYPE dd 0,0,0,
                          0,0,0,0,
                          0,0,0,0,0,
-                         0,0,0,0,0,0
-APPEAR_INTERVAL = 30
+                         0,0,0,0,0,0, 
+                         10 dup(0)
+
+APPEAR_INTERVAL dd 30, 30, 30, 30, 10
 ENEMY_LIFE_0 = 40
 ENEMY_MONEY_0 = 10
 

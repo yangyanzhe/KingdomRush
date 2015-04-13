@@ -891,6 +891,10 @@ PaintTowers ENDP
 PaintMonsters PROC
 ;
 ;---------------------------------------------------------
+    LOCAL   hMonster: DWORD
+    LOCAL   x: DWORD
+    LOCAL   y: DWORD
+
 	mov     eax, OFFSET Game.pEnemyArray
     mov     esi, eax
     mov     ecx, Game.Enemy_Num
@@ -916,18 +920,48 @@ DrawMonsters:
     .IF     eax > 0
       add   edx, TYPE BitmapInfo
     .ENDIF
-    push    edx
+    mov     hMonster, edx
     INVOKE  SelectObject, imgDC, (BitmapInfo PTR [edx]).bHandler
-    pop     edx
+    mov     edx, hMonster
 	INVOKE	TransparentBlt, 
 			memDC, (Enemy PTR [ebx]).Current_Pos.x, (Enemy PTR [ebx]).Current_Pos.y,
             (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
 			imgDC, 0, 0,
             (BitmapInfo PTR [edx]).bWidth, (BitmapInfo PTR [edx]).bHeight, 
 			tcolor
+    ; 画血条
+    INVOKE  SelectObject, memDC, hTotalLifePen
+    mov     hOldPen, eax
+    mov     edx, hMonster
+    mov     eax, (Enemy PTR [ebx]).Current_Pos.y
+    sub     eax, lifeHeight
+    mov     y, eax
+    mov     eax, (Enemy PTR [ebx]).Current_Pos.x
+    mov     x, eax
+    INVOKE  MoveToEx, memDC, x, y, NULL
+    mov     edx, hMonster
+    mov     eax, (BitmapInfo PTR [edx]).bWidth
+    add     x, eax
+    INVOKE  LineTo, memDC, x, y
+    INVOKE  SelectObject, memDC, hCurrentLifePen
+    mov     edx, hMonster
+    mov     eax, (Enemy PTR [ebx]).Current_Pos.x
+    mov     x, eax
+    INVOKE  MoveToEx, memDC, x, y, NULL
+    mov     edx, hMonster
+    mov     eax, (BitmapInfo PTR [edx]).bWidth
+    mul     WORD PTR (Enemy PTR [ebx]).Current_Life
+    div     WORD PTR (Enemy PTR [ebx]).Total_Life
+    add     x, eax
+    mov     edx, hMonster
+    INVOKE  LineTo, memDC, x, y
+    INVOKE  SelectObject, memDC, hOldPen
     add     esi, TYPE DWORD
     pop     ecx
-    loop    DrawMonsters
+    dec     ecx
+    cmp     ecx, 0
+    je      PaintMonstersExit
+    jmp     DrawMonsters
 	
 PaintMonstersExit:
     ret
@@ -1200,6 +1234,11 @@ PaintProc PROC,
 	mov 	hBitmap, eax
     INVOKE 	SelectObject, memDC, hBitmap
     mov 	hOld, eax
+
+    INVOKE  CreatePen, PS_SOLID, 0, currentLifeColor
+    mov     hCurrentLifePen, eax
+    INVOKE  CreatePen, PS_SOLID, 0, totalLifeColor
+    mov     hTotalLifePen, eax
 
     ; 判断是否处于等待页面
     cmp     Game.State, 0

@@ -86,8 +86,10 @@ LoadStation_Loop:
 
     mov     esi, OFFSET Game.RoundArray         ;esi指向每局轮次数组  
     mov     ecx, eax
+    mov     edx, OFFSET APPEAR_INTERVAL
 Initialize_Round_Loop:
-    mov     (Round PTR [esi]).Interval, APPEAR_INTERVAL
+    mov     eax, [edx]
+    mov     (Round PTR [esi]).Interval, eax
     mov     (Round PTR [esi]).Now_Enemy, 0
     mov     (Round PTR [esi]).state, 0
     mov     ebx, pRound_time
@@ -123,6 +125,7 @@ Initialize_Round_Loop:
     add     esi, TYPE Round
     add     pEnemy_number, TYPE DWORD
     add     pRound_time, TYPE DWORD
+    add     edx, TYPE DWORD
     loop    Initialize_Round_Loop
 
     ; 初始化点击信息
