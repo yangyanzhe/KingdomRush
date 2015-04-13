@@ -184,13 +184,24 @@ WinProc PROC,
 	  INVOKE    EndPaint, hWnd, ADDR ps
 
 	  ;播放音乐
+	  .IF PlayStartF == 0
+		.IF Game.State == 0
+			mov     PlayStartF, 1  
+			INVOKE  PlayMp3File, hWnd, ADDR StartFileName
+		.ENDIF
+	  .ENDIF 
+
 	  .IF PlayFlag == 0
-		mov     PlayFlag,1  
-		INVOKE  PlayMp3File, hWnd, ADDR MusicFileName
+		.IF Game.State == 1
+			invoke mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
+			mov     PlayFlag, 1  
+			INVOKE  PlayMp3File, hWnd, ADDR MusicFileName
+		.ENDIF
 	  .ENDIF
 	
 	  jmp       WinProcExit
     .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标点击事件
+	  INVOKE	PlaySound, OFFSET ClickFileName, 0, SND_ASYNC
       mov  	    ebx, lParam
       movzx     edx, bx
       mov     	cursorPosition.x, edx
