@@ -339,7 +339,7 @@ SearchAndAttack PROC,
     pushad
     mov esi, pTower
     mov eax, (Tower PTR [esi]).Tower_Type
-    .IF eax == 0
+    .IF eax == 0 || eax == 2 || eax == 1
         jmp SearchEnemy_Exit
     .ENDIF
     mov ecx, Game.Enemy_Num
