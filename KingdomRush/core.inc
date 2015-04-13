@@ -2,7 +2,6 @@ IFNDEF CORE_INC
 CORE_INC     equ <2>
 
 INCLUDE     struct.inc
-INCLUDE     data.inc
 
 .data
 EXTERNDEF Game: GameInfo

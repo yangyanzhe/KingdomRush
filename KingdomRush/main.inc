@@ -2,7 +2,6 @@ IFNDEF MAIN_INC
 MAIN_INC     equ <1>
 
 INCLUDE     struct.inc
-INCLUDE     data.inc
 
 .data
 ; 窗口信息
@@ -151,7 +150,11 @@ TIMER_ID = 1
 TIMER_INTERVAL = 100
 
 ; 血条信息
+lifeHeight          = 5
 currentLifeColor    = 000FF00h  ; Green
-totalLifeColor      = 0FF0000h  ; Red
+hCurrentLifePen     dd ?
+totalLifeColor      = 00000FFh  ; Red
+hTotalLifePen       dd ?
+hOldPen             dd ?
 
 ENDIF
