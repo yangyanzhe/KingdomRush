@@ -248,6 +248,7 @@ Loop_EnemyMove:
     mov edi, Game.Station_Num
     .IF esi == edi
         INVOKE DeleteEnemy, edx
+        dec Game.Player_Life
         sub ebx, TYPE DWORD
         dec edx
     .ENDIF
@@ -422,8 +423,10 @@ InsertBullet:
     .ENDIF
     mov (Bullet PTR [ebx]).Bullet_Type, eax
     mov eax, (Tower PTR [esi]).Pos.x
+    add eax, 20 ;微调
     mov (Bullet PTR [ebx]).Pos.x, eax
     mov eax, (Tower PTR [esi]).Pos.y
+    sub eax, 20 ;微调
     mov (Bullet PTR [ebx]).Pos.y, eax
     mov (Bullet PTR [ebx]).Target, edi
     mov (Bullet PTR [ebx]).Gesture, 0
@@ -465,15 +468,14 @@ Loop_BulletMove:
         .IF eax == edx
             mov eax, (Bullet PTR [ebx]).Attack
             mov edx, (Enemy PTR [esi]).Current_Life
+            INVOKE AOEAttack, ebx
             .IF edx < eax
                 mov edx, 0
             .ELSEIF
                 sub edx, eax
             .ENDIF
             mov (Enemy PTR [esi]).Current_Life, edx
-            .IF edx == 0
-                INVOKE EnemyCheckDie
-            .ENDIF
+            INVOKE EnemyCheckDie
             mov eax, (Bullet PTR [ebx]).Bullet_Type
             .IF eax == 4
                 mov edx, 1
@@ -496,7 +498,7 @@ UpdateBullets ENDP
 
 BulletMoveBoom PROC
     mov eax, (Bullet PTR [ebx]).Step
-    .IF eax < 3
+    .IF eax < 4
         INVOKE BulletMove, ebx
         inc (Bullet PTR [ebx]).Step
         jmp SkipMove
@@ -571,13 +573,13 @@ BulletMove PROC,
         jmp BulletMoveExit
     .ENDIF
     mov ebx, (Bullet PTR [esi]).Step
-    .IF ebx < 3
+    .IF ebx < 4
         mov eax, c_x
         mov edx, e_x
         .IF eax < edx
-            add c_x, 10
+            add c_x, 6
         .ELSEIF eax > edx
-            sub c_x, 10
+            sub c_x, 6
         .ENDIF
 
         sub c_y, 20
@@ -627,13 +629,13 @@ BulletMove PROC,
         .ELSE
             sub edi, Distance2
             .IF eax > edi
-                add c_y, 3
+                add c_y, 4
             .ELSE
                 sub edi, Distance3
                 .IF eax > edi
-                    add c_y, 2
+                    add c_y, 3
                 .ELSE
-                    add c_y, 1
+                    add c_y, 2
                 .ENDIF
             .ENDIF
         .ENDIF
@@ -711,6 +713,81 @@ DeleteBulletExit:
     popad
     ret
 DeleteBullet ENDP
+
+;---------------------------------------------------------------------- 
+AOEAttack PROC,
+    pBullet: DWORD
+         LOCAL c_x: DWORD,  
+               c_y: DWORD,
+               e_x: DWORD,
+               e_y: DWORD,
+               attack: DWORD
+;AOE攻击
+;require: 子弹的指针
+;---------------------------------------------------------------------- 
+    pushad
+    mov ebx, pBullet
+    mov eax, (Bullet PTR [ebx]).Bullet_Type
+    .IF eax != 4
+        jmp AOEAttackExit
+    .ENDIF
+
+    mov eax, (Bullet PTR [ebx]).Pos.x
+    mov c_x, eax
+    mov eax, (Bullet PTR [ebx]).Pos.y
+    mov c_y, eax
+    mov eax, (Bullet PTR [ebx]).Attack
+    mov attack, eax
+
+    mov esi, OFFSET Game.pEnemyArray
+    mov ecx, Game.Enemy_Num
+    .IF ecx == 0
+        jmp AOEAttackExit
+    .ENDIF
+JudgeAOE:
+    mov edi, [esi]
+    mov eax, (Enemy PTR [edi]).Current_Pos.x
+    mov e_x, eax
+    mov eax, (Enemy PTR [edi]).Current_Pos.y
+    mov e_y, eax
+
+    mov ebx, 0
+    mov eax, c_x
+    mov edx, e_x
+    .IF eax < edx
+        sub edx, eax
+        add ebx, edx
+    .ELSE
+        sub eax, edx
+        add ebx, eax
+    .ENDIF
+    mov eax, c_y
+    mov edx, e_y
+    .IF eax < edx
+        sub edx, eax
+        add ebx, edx
+    .ELSE
+        sub eax, edx
+        add ebx, eax
+    .ENDIF
+
+    .IF ebx < 60 && ebx >= 5
+        mov eax, attack
+        mov edx, (Enemy PTR [edi]).Current_Life
+        .IF edx < eax
+            mov edx, 0
+        .ELSE
+            sub edx, eax
+        .ENDIF
+        mov (Enemy PTR [edi]).Current_Life, edx
+    .ENDIF
+    add esi, TYPE DWORD
+    loop JudgeAOE
+
+AOEAttackExit:
+    popad
+    ret
+AOEAttack ENDP
 
 ;==========================    Animate    =============================
 ;---------------------------------------------------------------------- 
@@ -1015,7 +1092,7 @@ EnemyMove_Exit:
 EnemyMove ENDP
 
 ;----------------------------------------------------------------------   
-EnemyCheckDie PROC USES eax ebx ecx edi edx,
+EnemyCheckDie PROC USES eax ebx ecx edi edx esi,
 ;
 ;检查所有怪物的死亡情况，删去死亡的怪物
 ;----------------------------------------------------------------------
@@ -1029,6 +1106,7 @@ CheckAllDie:
     mov     edx, (Enemy PTR [edi]).Current_Life
     .IF edx == 0
         INVOKE DeleteEnemy, eax
+        INVOKE AddMoney, (Enemy PTR [edi]).Money
         sub ebx, TYPE DWORD
         sub eax, 1
     .ENDIF
