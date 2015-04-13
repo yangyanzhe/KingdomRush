@@ -34,7 +34,7 @@ AnimateTotal =   8
 UpdateTimer PROC
     inc     Game.Tick
     inc     Game.TowerTick
-    .IF Game.TowerTick == 50
+    .IF Game.TowerTick == 30
         mov Game.TowerTick, 0
     .ENDIF
     ;mov     eax, Game.Tick
