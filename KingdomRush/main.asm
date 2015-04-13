@@ -192,8 +192,10 @@ WinProc PROC,
     .IF eax == WM_TIMER
       .IF Game.State == 0
         INVOKE 	TimerProc_Prepared, hWnd
-      .ELSE
+      .ELSEIF Game.State > 0
 		INVOKE 	TimerProc_Started, hWnd
+      .ELSE
+
       .ENDIF
       INVOKE    InvalidateRect, hWnd, NULL, FALSE
       jmp    	WinProcExit
@@ -221,8 +223,10 @@ WinProc PROC,
 	  .IF wParam == MK_LBUTTON
         .IF Game.State == 0
           INVOKE 	LMouseProc_Prepared, hWnd, cursorPosition
+        .ELSEIF Game.State > 0
+		  INVOKE 	LMouseProc_Started, hWnd, cursorPosition
         .ELSE
-		   INVOKE 	LMouseProc_Started, hWnd, cursorPosition
+           
         .ENDIF
 	  .ENDIF
       jmp    	WinProcExit
@@ -1367,7 +1371,8 @@ PaintProc PROC,
 
     ; 判断是否处于等待页面
     cmp     Game.State, 0
-    jne     AlreadyStarted
+    jg      AlreadyStarted
+    jl      AlreadyEnd
 
     ; 游戏尚未开始
     ; Start页面
@@ -1453,6 +1458,9 @@ PaintProc PROC,
                 buttonHandler[TYPE BitmapInfo * 3].bHeight,
                 tcolor
     .ENDIF
+    jmp     PaintProcExit
+
+AlreadyEnd:
 
     jmp     PaintProcExit
 
