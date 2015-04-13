@@ -150,4 +150,8 @@ IDB_MONSTER141	EQU 209
 TIMER_ID = 1
 TIMER_INTERVAL = 100
 
+; ÑªÌõÐÅÏ¢
+currentLifeColor    = 000FF00h  ; Green
+totalLifeColor      = 0FF0000h  ; Red
+
 ENDIF
