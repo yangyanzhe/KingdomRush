@@ -77,12 +77,6 @@
     <None Include="resource\music\background01.mp3">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="resource\music\background02.mp3">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="resource\music\start.mp3">
-      <Filter>资源文件</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">

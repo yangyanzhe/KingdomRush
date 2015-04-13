@@ -56,8 +56,11 @@ PaintProc PROTO,
 	hWnd: DWORD
 
 PlayMp3File PROTO,
-	hWin:DWORD,
+	hWnd:DWORD,
 	NameOfFile:DWORD
+
+ContinuePlayMp3File PROTO,
+	hWnd:DWORD
 
 .code
 
@@ -201,19 +204,9 @@ WinProc PROC,
 	  INVOKE    EndPaint, hWnd, ADDR ps
 
 	  ;播放音乐
-	  .IF PlayStartF == 0
-		.IF Game.State == 0
-			mov     PlayStartF, 1  
-			INVOKE  PlayMp3File, hWnd, ADDR StartFileName
-		.ENDIF
-	  .ENDIF 
-
-	  .IF PlayFlag == 0
-		.IF Game.State == 1
-			invoke mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
-			mov     PlayFlag, 1  
-			INVOKE  PlayMp3File, hWnd, ADDR MusicFileName
-		.ENDIF
+	  .IF PlayFlag == 0 && Game.State > 0
+        mov     PlayFlag, 1 
+		INVOKE  PlayMp3File, hWnd, ADDR MusicFileName 
 	  .ENDIF
 	
 	  jmp       WinProcExit
@@ -229,9 +222,12 @@ WinProc PROC,
         .IF Game.State == 0
           INVOKE 	LMouseProc_Prepared, hWnd, cursorPosition
         .ELSE
-		  INVOKE 	LMouseProc_Started, hWnd, cursorPosition
+		   INVOKE 	LMouseProc_Started, hWnd, cursorPosition
         .ENDIF
 	  .ENDIF
+      jmp    	WinProcExit
+    .ELSEIF eax == MM_MCINOTIFY     ; 音乐循环播放
+      ;INVOKE    ContinuePlayMp3File, hWnd
       jmp    	WinProcExit
     .ELSEIF eax == WM_CLOSE         ; 关闭窗口事件
       INVOKE 	PostQuitMessage, 0
@@ -1325,7 +1321,7 @@ PaintText PROC
 	INVOKE DrawText, memDC, ADDR textMoney, -1, ADDR textRect, DT_VCENTER
 
 	; wave
-	mov eax, Game.Now_Round
+	mov eax, Game.Next_Round
 	INVOKE TransferNumToString, ADDR textWave
 	mov textRect.top, 42
 	mov textRect.left, 104
@@ -1503,14 +1499,15 @@ PaintProcExit:
 PaintProc ENDP
 
 ;----------------------------------------------------------------------
-PlayMp3File PROC hWin:DWORD, NameOfFile:DWORD
+PlayMp3File PROC hWnd:DWORD, NameOfFile:DWORD
 ;
 ; 播放音乐函数
 ;----------------------------------------------------------------------
-	LOCAL   mciOpenParms:MCI_OPEN_PARMS, mciPlayParms:MCI_PLAY_PARMS
+	LOCAL   mciOpenParms: MCI_OPEN_PARMS
+    LOCAL   mciPlayParms: MCI_PLAY_PARMS
 
-	mov     eax, hWin        
-	mov     mciPlayParms.dwCallback,eax
+    INVOKE  RtlZeroMemory, ADDR mciOpenParms, SIZEOF mciOpenParms
+    INVOKE  RtlZeroMemory, ADDR mciPlayParms, SIZEOF mciPlayParms
 	mov     eax, OFFSET Mp3Device
 	mov     mciOpenParms.lpstrDeviceType, eax
 	mov     eax, NameOfFile
@@ -1518,10 +1515,31 @@ PlayMp3File PROC hWin:DWORD, NameOfFile:DWORD
 	INVOKE  mciSendCommand, 0, MCI_OPEN,MCI_OPEN_TYPE or MCI_OPEN_ELEMENT, ADDR mciOpenParms
 	mov     eax, mciOpenParms.wDeviceID
 	mov     Mp3DeviceID, eax
-	INVOKE  mciSendCommand, Mp3DeviceID, MCI_PLAY, MCI_NOTIFY, ADDR mciPlayParms
+	
+    mov     eax, hWnd        
+	mov     mciPlayParms.dwCallback, eax
+    INVOKE  mciSendCommand, Mp3DeviceID, MCI_PLAY, MCI_NOTIFY, ADDR mciPlayParms
 	
 	ret
 PlayMp3File ENDP
+
+;----------------------------------------------------------------------
+ContinuePlayMp3File PROC hWnd:DWORD
+;
+; 播放音乐函数
+;----------------------------------------------------------------------
+	LOCAL   mciPlayParms: MCI_PLAY_PARMS
+    LOCAL   seekParam: MCI_SEEK_PARMS
+ 
+    INVOKE  RtlZeroMemory, ADDR seekParam, SIZEOF seekParam
+    INVOKE  mciSendCommand, Mp3DeviceID, MCI_SEEK, MCI_SEEK_TO_START, ADDR seekParam
+
+	mov     eax, hWnd        
+	mov     mciPlayParms.dwCallback, eax
+    INVOKE  mciSendCommand, Mp3DeviceID, MCI_PLAY, MCI_NOTIFY, ADDR mciPlayParms
+	
+	ret
+ContinuePlayMp3File ENDP
 
 ;---------------------------------------------------
 ErrorHandler PROC

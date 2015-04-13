@@ -248,6 +248,7 @@ Loop_EnemyMove:
     mov edi, Game.Station_Num
     .IF esi == edi
         INVOKE DeleteEnemy, edx
+        dec Game.Player_Life
         sub ebx, TYPE DWORD
         dec edx
     .ENDIF
@@ -576,9 +577,9 @@ BulletMove PROC,
         mov eax, c_x
         mov edx, e_x
         .IF eax < edx
-            add c_x, 5
+            add c_x, 6
         .ELSEIF eax > edx
-            sub c_x, 5
+            sub c_x, 6
         .ENDIF
 
         sub c_y, 20
@@ -1091,7 +1092,7 @@ EnemyMove_Exit:
 EnemyMove ENDP
 
 ;----------------------------------------------------------------------   
-EnemyCheckDie PROC USES eax ebx ecx edi edx,
+EnemyCheckDie PROC USES eax ebx ecx edi edx esi,
 ;
 ;检查所有怪物的死亡情况，删去死亡的怪物
 ;----------------------------------------------------------------------
@@ -1105,6 +1106,7 @@ CheckAllDie:
     mov     edx, (Enemy PTR [edi]).Current_Life
     .IF edx == 0
         INVOKE DeleteEnemy, eax
+        INVOKE AddMoney, (Enemy PTR [edi]).Money
         sub ebx, TYPE DWORD
         sub eax, 1
     .ENDIF

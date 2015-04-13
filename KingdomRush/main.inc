@@ -35,11 +35,10 @@ FontName		db "Arial", 0
 tcolor	        dd 0FFFFFFh				; transparent color
 
 ; “Ù¿÷
-Mp3DeviceID dd 0
-PlayFlag    dd 0
-PlayStartF	dd 0
-Mp3Files    db "*.mp3",125 dup (0)
-Mp3Device   db "MPEGVideo",0
+PlayFlag        dd 0
+Mp3Files        db "*.mp3", 125 dup (0)
+Mp3Device       db "MPEGVideo", 0
+Mp3DeviceID     dd 0
 Mp3BombDeviceID dd 0
 
 MusicFileName db 'resource/music/background01.mp3', 0
