@@ -465,15 +465,14 @@ Loop_BulletMove:
         .IF eax == edx
             mov eax, (Bullet PTR [ebx]).Attack
             mov edx, (Enemy PTR [esi]).Current_Life
+            INVOKE AOEAttack, ebx
             .IF edx < eax
                 mov edx, 0
             .ELSEIF
                 sub edx, eax
             .ENDIF
             mov (Enemy PTR [esi]).Current_Life, edx
-            .IF edx == 0
-                INVOKE EnemyCheckDie
-            .ENDIF
+            INVOKE EnemyCheckDie
             mov eax, (Bullet PTR [ebx]).Bullet_Type
             .IF eax == 4
                 mov edx, 1
@@ -711,6 +710,81 @@ DeleteBulletExit:
     popad
     ret
 DeleteBullet ENDP
+
+;---------------------------------------------------------------------- 
+AOEAttack PROC,
+    pBullet: DWORD
+         LOCAL c_x: DWORD,  
+               c_y: DWORD,
+               e_x: DWORD,
+               e_y: DWORD,
+               attack: DWORD
+;AOE¹¥»÷
+;require: ×Óµ¯µÄÖ¸Õë
+;---------------------------------------------------------------------- 
+    pushad
+    mov ebx, pBullet
+    mov eax, (Bullet PTR [ebx]).Bullet_Type
+    .IF eax != 4
+        jmp AOEAttackExit
+    .ENDIF
+
+    mov eax, (Bullet PTR [ebx]).Pos.x
+    mov c_x, eax
+    mov eax, (Bullet PTR [ebx]).Pos.y
+    mov c_y, eax
+    mov eax, (Bullet PTR [ebx]).Attack
+    mov attack, eax
+
+    mov esi, OFFSET Game.pEnemyArray
+    mov ecx, Game.Enemy_Num
+    .IF ecx == 0
+        jmp AOEAttackExit
+    .ENDIF
+JudgeAOE:
+    mov edi, [esi]
+    mov eax, (Enemy PTR [edi]).Current_Pos.x
+    mov e_x, eax
+    mov eax, (Enemy PTR [edi]).Current_Pos.y
+    mov e_y, eax
+
+    mov ebx, 0
+    mov eax, c_x
+    mov edx, e_x
+    .IF eax < edx
+        sub edx, eax
+        add ebx, edx
+    .ELSE
+        sub eax, edx
+        add ebx, eax
+    .ENDIF
+    mov eax, c_y
+    mov edx, e_y
+    .IF eax < edx
+        sub edx, eax
+        add ebx, edx
+    .ELSE
+        sub eax, edx
+        add ebx, eax
+    .ENDIF
+
+    .IF ebx < 60 && ebx >= 5
+        mov eax, attack
+        mov edx, (Enemy PTR [edi]).Current_Life
+        .IF edx < eax
+            mov edx, 0
+        .ELSE
+            sub edx, eax
+        .ENDIF
+        mov (Enemy PTR [edi]).Current_Life, edx
+    .ENDIF
+    add esi, TYPE DWORD
+    loop JudgeAOE
+
+AOEAttackExit:
+    popad
+    ret
+AOEAttack ENDP
 
 ;==========================    Animate    =============================
 ;---------------------------------------------------------------------- 
