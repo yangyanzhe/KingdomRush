@@ -1325,7 +1325,7 @@ PaintText PROC
 	INVOKE DrawText, memDC, ADDR textMoney, -1, ADDR textRect, DT_VCENTER
 
 	; wave
-	mov eax, Game.Now_Round
+	mov eax, Game.Next_Round
 	INVOKE TransferNumToString, ADDR textWave
 	mov textRect.top, 42
 	mov textRect.left, 104

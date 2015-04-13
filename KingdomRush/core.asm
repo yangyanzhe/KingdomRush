@@ -577,9 +577,9 @@ BulletMove PROC,
         mov eax, c_x
         mov edx, e_x
         .IF eax < edx
-            add c_x, 5
+            add c_x, 6
         .ELSEIF eax > edx
-            sub c_x, 5
+            sub c_x, 6
         .ENDIF
 
         sub c_y, 20
