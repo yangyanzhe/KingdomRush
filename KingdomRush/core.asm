@@ -380,7 +380,7 @@ SearchAndAttack PROC,
     pushad
     mov esi, pTower
     mov eax, (Tower PTR [esi]).Tower_Type
-    .IF eax == 0 || eax == 2 || eax == 1
+    .IF eax == 0
         jmp SearchEnemy_Exit
     .ENDIF
     mov ecx, Game.Enemy_Num
@@ -425,6 +425,12 @@ Search_Enemy_Loop:
 
     ;找到目标，产生子弹
     INVOKE CreateBullet, esi, ebx
+    mov edx, (Tower PTR [esi]).Tower_Type
+    .IF edx == 4
+        mov edx,(Tower PTR [esi]).Pos.y
+        sub edx, 56
+        INVOKE InsertAnimate, (Tower PTR [esi]).Pos.x, edx, 3
+    .ENDIF
     jmp SearchEnemy_Exit
 SearchEnemy_Continue:
     add edi, TYPE DWORD
@@ -593,7 +599,7 @@ BulletMove PROC,
     mov c_y, eax
     
     mov edx, (Bullet PTR [esi]).Bullet_Type
-    .IF edx == 3
+    .IF edx == 3 || edx == 2 || edx == 1
         mov eax, c_x
         mov edx, e_x
         .IF eax < edx
