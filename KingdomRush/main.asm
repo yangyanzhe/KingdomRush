@@ -1114,10 +1114,7 @@ DrawBullet:
 	cmp		eax, 0			; ¿ÕµØ
 	je		L2
 
-	cmp		eax, 3			; Ä§·¨Ëþ
-	jne		L1
-
-	mov		eax, 1			; Ä§·¨µ¯
+	sub   eax, 1
 	mov		ecx, type BitmapInfo
 	mul		ecx
 	add		ebx, eax
