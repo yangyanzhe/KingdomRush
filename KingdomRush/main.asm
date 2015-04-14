@@ -1343,6 +1343,13 @@ TransferNumToString PROC,
 	push esi
 	push edi
 
+	mov	ecx, 8
+clear:
+	mov esi, arrayOffset
+	mov ebx, 0
+	mov [esi], ebx
+	loop clear
+
 	mov	num, eax
 	mov ebx, 10		; divider
 	mov ch, 0		; array size
@@ -1365,8 +1372,6 @@ L1:
 
 	inc ch
 	jmp L1
-
-
 L2:
 	mov edi, arrayOffset
 	mov al, 48
@@ -1386,7 +1391,7 @@ L3:
 	add	edi, type byte
 	inc ch
 	cmp ch, arraySize
-	jbe L3
+	jb	L3
 
 L4:
 	pop edi
