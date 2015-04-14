@@ -549,6 +549,8 @@ TimerProc_Started PROC,
     INVOKE UpdateTowers
     INVOKE UpdateBullets
     INVOKE UpdateAnimates
+    INVOKE CheckWinGame
+    INVOKE CheckLoseGame
     INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
 TimerProc_Started ENDP
