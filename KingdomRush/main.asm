@@ -213,11 +213,31 @@ WinProc PROC,
 	  INVOKE    EndPaint, hWnd, ADDR ps
 
 	  ;播放音乐
+	  .IF PlayStart == 0 && Game.State == 0
+        mov     PlayStart, 1 
+		INVOKE  PlayMp3File, hWnd, ADDR StartFileName 
+	  .ENDIF
+
 	  .IF PlayFlag == 0 && Game.State > 0
+		invoke mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
+		mov		PlayStart,0
         mov     PlayFlag, 1 
 		INVOKE  PlayMp3File, hWnd, ADDR MusicFileName 
 	  .ENDIF
-	
+
+	  .IF PlayFlag == 1
+		mov		eax, countTime
+		add		eax, 1
+		mov		countTime, eax
+		.IF		countTime == 600
+			INVOKE mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
+			INVOKE  PlayMp3File, hWnd, ADDR MusicFileName 
+			;INVOKE ContinuePlayMp3File, hWnd
+			mov	eax, 0
+			mov countTime, eax
+		.ENDIF
+	  .ENDIF
+
 	  jmp       WinProcExit
     .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标点击事件
 	  INVOKE	PlaySound, OFFSET ClickFileName, 0, SND_ASYNC
@@ -943,6 +963,12 @@ DrawTowers:
     mov     eax, (Tower PTR [ebx]).Tower_Type
     cmp     eax, 0
     je      DrawTowers0
+
+	mov		edx, (Tower PTR [ebx]).AnimatePlaying
+	.IF		edx == 1
+		jmp DrawTowers0
+	.ENDIF
+
     mov     edx, OFFSET towerHandler
     .WHILE  eax > 0
       add   edx, TYPE BitmapInfo
@@ -1176,10 +1202,7 @@ DrawBullet:
 	cmp		eax, 0			; 空地
 	je		L2
 
-	cmp		eax, 3			; 魔法塔
-	jne		L1
-
-	mov		eax, 1			; 魔法弹
+	sub   eax, 1
 	mov		ecx, type BitmapInfo
 	mul		ecx
 	add		ebx, eax
@@ -1305,32 +1328,29 @@ TransferNumToString PROC,
 	Local num:DWORD
 	Local arraySize:BYTE
 	
+	push ebx
 	push ecx
 	push esi
 	push edi
 
-    .IF eax > 255
-        mov eax, eax
-    .ENDIF
-
 	mov	num, eax
-	mov cl, 10
-	mov ch, 0
-	mov esi, OFFSET textArrayA
+	mov ebx, 10		; divider
+	mov ch, 0		; array size
+	mov esi, OFFSET textArrayA		; temp array
 L1:
-	mov ah, 0
-	div cl
+	mov edx, 0
+	div ebx
 	
-	.IF al == 0
-		.IF ah == 0
+	.IF eax == 0
+		.IF edx == 0
 			mov arraySize, ch
 			mov ch, 0
 			jmp L2
 		.ENDIF
 	.ENDIF
 
-	add ah, '0'
-	mov [esi], ah
+	add dl, '0'
+	mov [esi], dl
 	add	esi, type byte
 
 	inc ch
@@ -1362,6 +1382,7 @@ L4:
 	pop edi
 	pop esi
 	pop ecx
+	pop ebx
 	ret
 TransferNumToString ENDP
 

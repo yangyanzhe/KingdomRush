@@ -380,7 +380,7 @@ SearchAndAttack PROC,
     pushad
     mov esi, pTower
     mov eax, (Tower PTR [esi]).Tower_Type
-    .IF eax == 0 || eax == 2 || eax == 1
+    .IF eax == 0
         jmp SearchEnemy_Exit
     .ENDIF
     mov ecx, Game.Enemy_Num
@@ -425,6 +425,13 @@ Search_Enemy_Loop:
 
     ;找到目标，产生子弹
     INVOKE CreateBullet, esi, ebx
+    mov edx, (Tower PTR [esi]).Tower_Type
+    .IF edx == 4
+        mov (Tower PTR [esi]).AnimatePlaying, 1
+        mov edx,(Tower PTR [esi]).Pos.y
+        sub edx, 56
+        INVOKE InsertAnimate, (Tower PTR [esi]).Pos.x, edx, 3
+    .ENDIF
     jmp SearchEnemy_Exit
 SearchEnemy_Continue:
     add edi, TYPE DWORD
@@ -593,7 +600,7 @@ BulletMove PROC,
     mov c_y, eax
     
     mov edx, (Bullet PTR [esi]).Bullet_Type
-    .IF edx == 3
+    .IF edx == 3 || edx == 2 || edx == 1
         mov eax, c_x
         mov edx, e_x
         .IF eax < edx
@@ -847,7 +854,7 @@ InsertAnimate PROC,
     py: DWORD,
     _Type: DWORD
 ;插入动画
-;require: 动画坐标、类型
+;require: 动画坐标、类型; 特别的：当type=3时，esi存放了塔的指针
 ;---------------------------------------------------------------------- 
     pushad
     mov ebx, OFFSET Game.AnimateArray
@@ -869,6 +876,9 @@ FoundInsertedAnimatePosition:
     mov (Animate PTR [ebx]).Gesture, 0
     mov eax, _Type
     mov (Animate PTR [ebx]).Animate_Type, eax
+    .IF eax == 3
+        mov (Animate PTR [ebx]).pTower, esi
+    .ENDIF
     inc Game.Animate_Num
     popad
     ret
@@ -909,6 +919,8 @@ MoveAnimateArray:
     mov (Animate PTR [ebx]).Pos.y, eax
     mov eax, (Animate PTR [esi]).Gesture
     mov (Animate PTR [ebx]).Gesture, eax
+    mov eax, (Animate PTR [esi]).pTower
+    mov (Animate PTR [ebx]).pTower, eax
     pop eax
     inc eax
     jmp MoveAnimateArray
@@ -934,6 +946,16 @@ UpdateAnimateLoop:
     add (Animate PTR [ebx]).Gesture, 1
     mov edx, (Animate PTR [ebx]).Gesture
     .IF edx == AnimateTotal
+        mov edx, (Animate PTR [ebx]).Animate_Type
+        .IF edx == 3
+            mov edi, OFFSET Game.TowerArray
+            mov ecx, Game.Tower_Num
+        L1:
+            mov (Tower PTR [edi]).AnimatePlaying, 0
+            add edi, TYPE Tower
+            loop L1
+
+        .ENDIF
         INVOKE DeleteAnimate, eax
         sub eax, 1
         sub ebx, TYPE Animate

@@ -18,6 +18,7 @@ Tower struct
     Is_aoe				dd ?
     Aoe_range			dd ?
     Pos		            Coord <>
+    AnimatePlaying      dd 0                   ;0表示未在播放动画， 1表示正在播放动画。此时应该不画塔
 Tower ends
 
 ;怪物
@@ -59,6 +60,7 @@ Animate struct
 	Animate_Type		dd ?
 	Pos					Coord <>
 	Gesture				dd ?
+    pTower              dd ?
 Animate ends
 
 ;游戏信息
