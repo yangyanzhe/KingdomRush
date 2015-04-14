@@ -141,6 +141,23 @@ Initialize_Round_Loop:
 LoadGameInfo ENDP
 
 ;----------------------------------------------------------------------
+GetTowerCost PROC USES ebx ecx edx,
+    _number: DWORD
+;----------------------------------------------------------------------
+    mov ebx, OFFSET TOWER_COST
+    mov ecx, _number
+    .IF ecx == 0
+        jmp GetTowerCostExit
+    .ENDIF
+L1:
+    add ebx, TYPE DWORD
+    loop L1
+GetTowerCostExit:
+    mov eax, [ebx]
+    ret
+GetTowerCost ENDP
+
+;----------------------------------------------------------------------
 GetEnemyLife PROC USES ebx ecx edx,
     _number: DWORD
 ;----------------------------------------------------------------------
