@@ -10,15 +10,15 @@ ROUND_NUMBER dd 5
 ROUND_TRIGGER_TIME dd 30,200,400,600,900
 EACH_ROUND_ENEMY_NUMBER dd 3,5,10,50,100
 EACH_ROUND_ENEMY_TYPE dd 3 dup(0),
-                         5 dup(0),
-                         10 dup(0),
+                         5 dup(1),
+                         10 dup(2),
                          50 dup(0),
                          100 dup(0)
 
 APPEAR_INTERVAL dd 30, 20, 10, 8, 4
 
-ENEMY_LIFE_0 = 40
-ENEMY_MONEY_0 = 10
+ENEMY_LIFE dd 40, 80, 120, 1000
+ENEMY_MONEY dd 3, 10, 20, 200
 
 Station_Num = 12
 Station Coord <320, 175>, <291, 215>, <193, 233>, <165, 345>, <194, 398>, 
@@ -104,5 +104,11 @@ AddMoney PROTO,
 CheckWinGame PROTO
 
 CheckLoseGame PROTO
+
+GetEnemyMoney PROTO,
+    _number: DWORD
+
+GetEnemyLife PROTO,
+    _number: DWORD
 
 ENDIF
