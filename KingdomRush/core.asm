@@ -100,8 +100,7 @@ Initialize_Round_Loop:
     mov     ebx, pEnemy_number
     mov     eax, [ebx]
     mov     (Round PTR [esi]).Enemy_Num, eax    ;设置每轮怪物数量
-    mov     eax, esi
-    mov     edi, eax                            ;edi指向每轮怪物数组
+    mov     edi, esi                            ;edi指向每轮怪物数组
     push    ecx
     mov     ecx, [ebx]
     ;初始化每轮怪物
@@ -110,11 +109,11 @@ Initialize_Round_Loop:
         mov     eax, [ebx]
         mov     (Enemy PTR [edi]).Enemy_Type, eax
 
-        mov     eax, ENEMY_LIFE_0
+        INVOKE  GetEnemyLife, eax
         mov     (Enemy PTR [edi]).Current_Life, eax
         mov     (Enemy PTR [edi]).Total_Life, eax
 
-        mov     eax, ENEMY_MONEY_0
+        INVOKE  GetEnemyMoney, [ebx]
         mov     (Enemy PTR [edi]).Money, eax
 
         mov     (Enemy PTR [edi]).Gesture, 0
@@ -140,6 +139,41 @@ Initialize_Round_Loop:
 
     ret
 LoadGameInfo ENDP
+
+;----------------------------------------------------------------------
+GetEnemyLife PROC USES ebx ecx edx,
+    _number: DWORD
+;----------------------------------------------------------------------
+    mov ebx, OFFSET ENEMY_LIFE
+    mov ecx, _number
+    .IF ecx == 0
+        jmp GetEnemyLifeExit
+    .ENDIF
+L1:
+    add ebx, TYPE DWORD
+    loop L1
+GetEnemyLifeExit:
+    mov eax, [ebx]
+    ret
+GetEnemyLife ENDP
+
+;----------------------------------------------------------------------
+GetEnemyMoney PROC USES ebx ecx edx,
+    _number: DWORD
+;----------------------------------------------------------------------
+    mov ebx, OFFSET ENEMY_MONEY
+    mov ecx, _number
+    .IF ecx == 0
+        jmp GetEnemyMoneyExit
+    .ENDIF
+L1:
+    add ebx, TYPE DWORD
+    loop L1
+GetEnemyMoneyExit:
+    mov eax, [ebx]
+    ret
+GetEnemyMoney ENDP
+
 
 ;----------------------------------------------------------------------   
 StartGame PROC
