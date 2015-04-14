@@ -902,11 +902,6 @@ FindDeletedAnimateLoop:
     add eax, 1
     jmp FindDeletedAnimateLoop
 FoundDeletedAnimatePosition:
-    mov edx, (Animate PTR [ebx]).Animate_Type
-    .IF edx == 3
-        mov esi, (Animate PTR [ebx]).pTower
-        mov (Tower PTR [esi]).AnimatePlaying, 0
-    .ENDIF
     mov ecx, Game.Animate_Num
     dec ecx
 MoveAnimateArray:
@@ -951,6 +946,16 @@ UpdateAnimateLoop:
     add (Animate PTR [ebx]).Gesture, 1
     mov edx, (Animate PTR [ebx]).Gesture
     .IF edx == AnimateTotal
+        mov edx, (Animate PTR [ebx]).Animate_Type
+        .IF edx == 3
+            mov edi, OFFSET Game.TowerArray
+            mov ecx, Game.Tower_Num
+        L1:
+            mov (Tower PTR [edi]).AnimatePlaying, 0
+            add edi, TYPE Tower
+            loop L1
+
+        .ENDIF
         INVOKE DeleteAnimate, eax
         sub eax, 1
         sub ebx, TYPE Animate
