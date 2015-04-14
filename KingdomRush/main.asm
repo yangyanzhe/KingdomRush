@@ -1240,32 +1240,29 @@ TransferNumToString PROC,
 	Local num:DWORD
 	Local arraySize:BYTE
 	
+	push ebx
 	push ecx
 	push esi
 	push edi
 
-    .IF eax > 255
-        mov eax, eax
-    .ENDIF
-
 	mov	num, eax
-	mov cl, 10
-	mov ch, 0
-	mov esi, OFFSET textArrayA
+	mov ebx, 10		; divider
+	mov ch, 0		; array size
+	mov esi, OFFSET textArrayA		; temp array
 L1:
-	mov ah, 0
-	div cl
+	mov edx, 0
+	div ebx
 	
-	.IF al == 0
-		.IF ah == 0
+	.IF eax == 0
+		.IF edx == 0
 			mov arraySize, ch
 			mov ch, 0
 			jmp L2
 		.ENDIF
 	.ENDIF
 
-	add ah, '0'
-	mov [esi], ah
+	add dl, '0'
+	mov [esi], dl
 	add	esi, type byte
 
 	inc ch
@@ -1297,6 +1294,7 @@ L4:
 	pop edi
 	pop esi
 	pop ecx
+	pop ebx
 	ret
 TransferNumToString ENDP
 
