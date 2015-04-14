@@ -206,11 +206,19 @@ WinProc PROC,
 	  INVOKE    EndPaint, hWnd, ADDR ps
 
 	  ;播放音乐
+	  .IF PlayStart == 0 && Game.State == 0
+        mov     PlayStart, 1 
+		INVOKE  PlayMp3File, hWnd, ADDR StartFileName 
+	  .ENDIF
+
+	  ;播放音乐
 	  .IF PlayFlag == 0 && Game.State > 0
+		invoke mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
+		mov		PlayStart,0
         mov     PlayFlag, 1 
 		INVOKE  PlayMp3File, hWnd, ADDR MusicFileName 
 	  .ENDIF
-	
+
 	  jmp       WinProcExit
     .ELSEIF eax == WM_LBUTTONDOWN   ; 鼠标点击事件
 	  INVOKE	PlaySound, OFFSET ClickFileName, 0, SND_ASYNC
@@ -881,6 +889,12 @@ DrawTowers:
     mov     eax, (Tower PTR [ebx]).Tower_Type
     cmp     eax, 0
     je      DrawTowers0
+
+	mov		edx, (Tower PTR [ebx]).AnimatePlaying
+	.IF		edx == 1
+		jmp DrawTowers0
+	.ENDIF
+
     mov     edx, OFFSET towerHandler
     .WHILE  eax > 0
       add   edx, TYPE BitmapInfo

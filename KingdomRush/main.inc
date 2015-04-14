@@ -35,6 +35,7 @@ FontName		db "Arial", 0
 tcolor	        dd 0FFFFFFh				; transparent color
 
 ; “Ù¿÷
+PlayStart		dd 0
 PlayFlag        dd 0
 Mp3Files        db "*.mp3", 125 dup (0)
 Mp3Device       db "MPEGVideo", 0
