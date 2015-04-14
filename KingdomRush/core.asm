@@ -425,6 +425,9 @@ Search_Enemy_Loop:
 
     ;找到目标，产生子弹
     INVOKE CreateBullet, esi, ebx
+    mov edx,(Tower PTR [esi]).Pos.y
+    sub edx, 56
+    INVOKE InsertAnimate, (Tower PTR [esi]).Pos.x, edx, 3
     jmp SearchEnemy_Exit
 SearchEnemy_Continue:
     add edi, TYPE DWORD
@@ -593,7 +596,7 @@ BulletMove PROC,
     mov c_y, eax
     
     mov edx, (Bullet PTR [esi]).Bullet_Type
-    .IF edx == 3
+    .IF edx == 3 || edx == 2 || edx == 1
         mov eax, c_x
         mov edx, e_x
         .IF eax < edx
