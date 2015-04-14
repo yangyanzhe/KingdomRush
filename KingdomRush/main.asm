@@ -797,6 +797,11 @@ CheckSignClicked0:
         cmp  cursorPosition.y, eax
         ja   CheckSignClicked1
 
+        INVOKE GetTowerCost, edi
+        cmp  eax, Game.Player_Money
+        ja   CheckSignClicked2
+
+        sub  Game.Player_Money, eax
         mov  (Tower PTR [ebx]).Tower_Type, edi
         .IF edi == 1
             mov  (Tower PTR [ebx]).Attack, 10
@@ -848,6 +853,16 @@ CheckSignClicked2:
 
         cmp  (Tower PTR [ebx]).Tower_Type, 4
         ja   CheckSignClicked4
+
+        mov  edi, (Tower PTR [ebx]).Tower_Type
+        INVOKE GetTowerCost, edi
+        mov  edx, eax
+        add  edi, 4
+        INVOKE GetTowerCost, edi
+        sub  edx, eax
+        cmp  edx, Game.Player_Money
+        ja   CheckSignClicked4
+        sub  Game.Player_Money, edx
         add  (Tower PTR [ebx]).Tower_Type, 4
         jmp  CheckSignClicked4
 
@@ -870,6 +885,9 @@ CheckSignClicked3:
         cmp  cursorPosition.y, eax
         ja   CheckSignClicked4
 
+        INVOKE GetTowerCost, (Tower PTR [ebx]).Tower_Type
+        shr  eax, 1
+        add  Game.Player_Money, eax
         mov  (Tower PTR [ebx]).Tower_Type, 0
 CheckSignClicked4:
         mov  Game.IsClicked, 0
