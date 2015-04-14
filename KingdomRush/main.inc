@@ -10,6 +10,7 @@ window_y        dd 0
 window_w        dd 700
 window_h        dd 600
 
+countTime		dd 0
 hInstance       dd ?
 hMainWnd        dd ?
 hIcon           dd ?

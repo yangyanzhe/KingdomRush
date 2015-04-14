@@ -211,12 +211,24 @@ WinProc PROC,
 		INVOKE  PlayMp3File, hWnd, ADDR StartFileName 
 	  .ENDIF
 
-	  ;²¥·ÅÒôÀÖ
 	  .IF PlayFlag == 0 && Game.State > 0
 		invoke mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
 		mov		PlayStart,0
         mov     PlayFlag, 1 
 		INVOKE  PlayMp3File, hWnd, ADDR MusicFileName 
+	  .ENDIF
+
+	  .IF PlayFlag == 1
+		mov		eax, countTime
+		add		eax, 1
+		mov		countTime, eax
+		.IF		countTime == 600
+			INVOKE mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
+			INVOKE  PlayMp3File, hWnd, ADDR MusicFileName 
+			;INVOKE ContinuePlayMp3File, hWnd
+			mov	eax, 0
+			mov countTime, eax
+		.ENDIF
 	  .ENDIF
 
 	  jmp       WinProcExit
