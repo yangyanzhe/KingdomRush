@@ -427,6 +427,7 @@ Search_Enemy_Loop:
     INVOKE CreateBullet, esi, ebx
     mov edx, (Tower PTR [esi]).Tower_Type
     .IF edx == 4
+        mov (Tower PTR [esi]).AnimatePlaying, 1
         mov edx,(Tower PTR [esi]).Pos.y
         sub edx, 56
         INVOKE InsertAnimate, (Tower PTR [esi]).Pos.x, edx, 3
@@ -853,7 +854,7 @@ InsertAnimate PROC,
     py: DWORD,
     _Type: DWORD
 ;插入动画
-;require: 动画坐标、类型
+;require: 动画坐标、类型; 特别的：当type=3时，esi存放了塔的指针
 ;---------------------------------------------------------------------- 
     pushad
     mov ebx, OFFSET Game.AnimateArray
@@ -875,6 +876,9 @@ FoundInsertedAnimatePosition:
     mov (Animate PTR [ebx]).Gesture, 0
     mov eax, _Type
     mov (Animate PTR [ebx]).Animate_Type, eax
+    .IF eax == 3
+        mov (Animate PTR [ebx]).pTower, esi
+    .ENDIF
     inc Game.Animate_Num
     popad
     ret
@@ -898,6 +902,11 @@ FindDeletedAnimateLoop:
     add eax, 1
     jmp FindDeletedAnimateLoop
 FoundDeletedAnimatePosition:
+    mov edx, (Animate PTR [ebx]).Animate_Type
+    .IF edx == 3
+        mov esi, (Animate PTR [ebx]).pTower
+        mov (Tower PTR [esi]).AnimatePlaying, 0
+    .ENDIF
     mov ecx, Game.Animate_Num
     dec ecx
 MoveAnimateArray:
@@ -915,6 +924,8 @@ MoveAnimateArray:
     mov (Animate PTR [ebx]).Pos.y, eax
     mov eax, (Animate PTR [esi]).Gesture
     mov (Animate PTR [ebx]).Gesture, eax
+    mov eax, (Animate PTR [esi]).pTower
+    mov (Animate PTR [ebx]).pTower, eax
     pop eax
     inc eax
     jmp MoveAnimateArray
