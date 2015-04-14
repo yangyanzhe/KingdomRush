@@ -590,7 +590,7 @@ TimerProc_Ended PROC,
     ret
 
 TimerProc_EndedExit:
-    mov   Game.ButtonIndex, 0
+    mov     Game.ButtonIndex, 0
     ret
 TimerProc_Ended ENDP
 

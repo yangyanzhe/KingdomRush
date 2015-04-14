@@ -7,8 +7,8 @@ INCLUDE     struct.inc
 EXTERNDEF Game: GameInfo
 
 ROUND_NUMBER dd 5
-ROUND_TRIGGER_TIME dd 30,200,400,600,900
-EACH_ROUND_ENEMY_NUMBER dd 3,5,10,50,100
+ROUND_TRIGGER_TIME dd 30,30,30,30,30;30,200,400,600,900
+EACH_ROUND_ENEMY_NUMBER dd 1,1,1,1,1;3,5,10,50,100
 EACH_ROUND_ENEMY_TYPE dd 3 dup(0),
                          5 dup(0),
                          10 dup(0),
