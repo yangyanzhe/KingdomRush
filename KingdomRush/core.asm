@@ -210,7 +210,7 @@ CheckLoseGame PROC
     pushad
     mov eax, Game.Player_Life
     .IF eax == 0
-        mov Game.State, 2
+        mov Game.State, 3
     .ENDIF
     popad
     ret
@@ -228,7 +228,7 @@ CheckWinGame PROC
         .IF eax == 0
             mov eax, Game.Player_Life
             .IF eax > 0
-                mov Game.State, 1
+                mov Game.State, 2
             .ENDIF
         .ENDIF
     .ENDIF

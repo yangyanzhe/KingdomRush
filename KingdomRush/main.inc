@@ -51,17 +51,19 @@ AhFileName	  db 'resource/music/ah.wav', 0
 
 instructionNum  = 4
 buttonNum       = 4
+endNum          = 2
 mapNum      	= 1
 towerNum    	= 5
 signNum         = 8
 blankSignNum    = 5
 towerSignNum    = 3
-monsterNum	 	= 3
+monsterNum	 	= 4
 bulletNum		= 4
 animateNum    	= 32
 
 instructionHandler  BitmapInfo instructionNum DUP(<>)
 buttonHandler       BitmapInfo buttonNum DUP(<>)
+endHandler          BitmapInfo endNum DUP(<>)
 mapHandler          BitmapInfo mapNum DUP(<>)
 blankSet            PositionSet mapNum DUP(<>)
 signHandler         BitmapInfo signNum DUP(<>)
@@ -114,6 +116,12 @@ IDB_BLANKCLICK  EQU 124
 IDB_BULLET		 EQU 127
 
 IDB_ANIMATE 		EQU	140
+
+; Ω· ¯Õº∆¨
+IDB_END         EQU 188
+IDB_VICTORY     EQU 188
+IDB_DEFEAT      EQU 189
+END_BUTTON_POS      Coord <247, 400>
 
 ; µÿÕº
 IDB_MAP         EQU 190

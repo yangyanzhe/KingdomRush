@@ -36,6 +36,9 @@ TimerProc_Prepared PROTO,
 TimerProc_Started PROTO,
     hWnd: DWORD
 
+TimerProc_Ended PROTO,
+    hWnd: DWORD
+
 MouseMoveProc_Prepared PROTO,
 	hWnd: DWORD,
     cursorPosition: Coord
@@ -52,6 +55,10 @@ LMouseProc_Started PROTO,
 	hWnd: DWORD,
 	cursorPosition: Coord
 	
+LMouseProc_Ended PROTO,
+	hWnd: DWORD,
+	cursorPosition: Coord
+
 PaintProc PROTO,
 	hWnd: DWORD
 
@@ -192,10 +199,10 @@ WinProc PROC,
     .IF eax == WM_TIMER
       .IF Game.State == 0
         INVOKE 	TimerProc_Prepared, hWnd
-      .ELSEIF Game.State > 0
+      .ELSEIF Game.State == 1
 		INVOKE 	TimerProc_Started, hWnd
       .ELSE
-
+        INVOKE  TimerProc_Ended, hWnd
       .ENDIF
       INVOKE    InvalidateRect, hWnd, NULL, FALSE
       jmp    	WinProcExit
@@ -243,10 +250,10 @@ WinProc PROC,
 	  .IF wParam == MK_LBUTTON
         .IF Game.State == 0
           INVOKE 	LMouseProc_Prepared, hWnd, cursorPosition
-        .ELSEIF Game.State > 0
+        .ELSEIF Game.State == 1
 		  INVOKE 	LMouseProc_Started, hWnd, cursorPosition
         .ELSE
-           
+          INVOKE    LMouseProc_Ended, hWnd, cursorPosition
         .ENDIF
 	  .ENDIF
       jmp    	WinProcExit
@@ -318,6 +325,9 @@ InitImages PROC,
     ; 载入开始图片和按钮
     INVOKE  LoadTypeImages, hInst, instructionNum, OFFSET instructionHandler, IDB_INSTRUCTION
     INVOKE  LoadTypeImages, hInst, buttonNum, OFFSET buttonHandler, IDB_BUTTON
+
+    ; 载入结束图片
+    INVOKE  LoadTypeImages, hInst, endNum, OFFSET endHandler, IDB_END
 
     ; 载入地图图片
     INVOKE  LoadTypeImages, hInst, mapNum, OFFSET mapHandler, IDB_MAP
@@ -576,6 +586,35 @@ TimerProc_Started PROC,
 TimerProc_Started ENDP
 
 ;-----------------------------------------------------------------------
+TimerProc_Ended PROC,
+    hWnd: DWORD
+;-----------------------------------------------------------------------
+    LOCAL   p: POINT
+
+    INVOKE  GetCursorPos, ADDR p
+    INVOKE  ScreenToClient, hWnd, ADDR p
+    mov     eax, END_BUTTON_POS.x
+    cmp     eax, p.x
+    jg      TimerProc_EndedExit
+    add     eax, buttonHandler[0].bWidth
+    cmp     eax, p.x
+    jl      TimerProc_EndedExit
+    mov     eax, END_BUTTON_POS.y
+    cmp     eax, p.y
+    jg      TimerProc_EndedExit
+    add     eax, buttonHandler[0].bHeight
+    cmp     eax, p.y
+    jl      TimerProc_EndedExit
+
+    mov     Game.ButtonIndex, 1
+    ret
+
+TimerProc_EndedExit:
+    mov     Game.ButtonIndex, 0
+    ret
+TimerProc_Ended ENDP
+
+;-----------------------------------------------------------------------
 LMouseProc_Prepared PROC,
 	hWnd: DWORD,
 	cursorPosition: Coord
@@ -612,6 +651,7 @@ LMouseProc_Prepared PROC,
       jl    LMouseInstruction1Next
 
       mov   Game.InstructionIndex, 0
+      mov   Game.ButtonIndex, 0
       inc   Game.State
       jmp   LMouseProc_PreparedExit
 
@@ -646,6 +686,7 @@ LMouseInstruction1Next:
       jl    LMouseInstruction2Next
 
       mov   Game.InstructionIndex, 0
+      mov   Game.ButtonIndex, 0
       inc   Game.State
       jmp   LMouseProc_PreparedExit
 
@@ -680,6 +721,7 @@ LMouseInstruction2Next:
       jl    LMouseProc_PreparedExit
 
       mov   Game.InstructionIndex, 0
+      mov   Game.ButtonIndex, 0
       inc   Game.State
     .ENDIF
 
@@ -869,6 +911,34 @@ LMouseProcExit:
     INVOKE InvalidateRect, hWnd, NULL, FALSE
     ret
 LMouseProc_Started ENDP
+
+;-----------------------------------------------------------------------
+LMouseProc_Ended PROC,
+	hWnd: DWORD,
+	cursorPosition: Coord
+;-----------------------------------------------------------------------
+    mov     eax, END_BUTTON_POS.x
+    cmp     eax, cursorPosition.x
+    jg      LMouseProc_EndedExit
+    add     eax, buttonHandler[0].bWidth
+    cmp     eax, cursorPosition.x
+    jl      LMouseProc_EndedExit
+    mov     eax, END_BUTTON_POS.y
+    cmp     eax, cursorPosition.y
+    jg      LMouseProc_EndedExit
+    add     eax, buttonHandler[0].bHeight
+    cmp     eax, cursorPosition.y
+    jl      LMouseProc_EndedExit
+    INVOKE  InitMapInfo
+    INVOKE  LoadGameInfo
+    INVOKE  mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
+	INVOKE  PlayMp3File, hWnd, ADDR MusicFileName 
+	mov     countTime, 0
+    mov     Game.State, 1
+
+LMouseProc_EndedExit:
+    ret
+LMouseProc_Ended ENDP
 
 ;-----------------------------------------------------------------------
 PaintTowers PROC
@@ -1397,9 +1467,10 @@ PaintProc PROC,
     mov     hTotalLifePen, eax
 
     ; 判断是否处于等待页面
+    cmp     Game.State, 1
+    je      AlreadyStarted
     cmp     Game.State, 0
-    jg      AlreadyStarted
-    jl      AlreadyEnd
+    jg      AlreadyEnded
 
     ; 游戏尚未开始
     ; Start页面
@@ -1487,8 +1558,28 @@ PaintProc PROC,
     .ENDIF
     jmp     PaintProcExit
 
-AlreadyEnd:
+AlreadyEnded:
+    mov     ebx, OFFSET endHandler
+    .IF Game.State == 3
+      add   ebx, TYPE BitmapInfo
+    .ENDIF
+    INVOKE 	SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
+	INVOKE 	StretchBlt, 
+			memDC, 0, 0, window_w, window_h, 
+			imgDC, 0, 0, (BitmapInfo PTR [ebx]).bWidth, (BitmapInfo PTR [ebx]).bHeight, 
+			SRCCOPY
 
+    ; 悬停的button绘制
+    cmp     Game.ButtonIndex, 0
+    je      PaintProcExit
+
+    INVOKE  SelectObject, imgDC, buttonHandler[0].bHandler
+    INVOKE  TransparentBlt, 
+            memDC, END_BUTTON_POS.x, END_BUTTON_POS.y,
+            buttonHandler[0].bWidth, buttonHandler[0].bHeight,
+            imgDC, 0, 0, 
+            buttonHandler[0].bWidth, buttonHandler[0].bHeight, 
+            tcolor
     jmp     PaintProcExit
 
     ; 游戏已经开始
