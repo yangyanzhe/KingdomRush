@@ -53,11 +53,11 @@ instructionNum  = 4
 buttonNum       = 4
 endNum          = 2
 mapNum      	= 1
-towerNum    	= 9
+towerNum    	= 5
 signNum         = 8
 blankSignNum    = 5
 towerSignNum    = 3
-monsterNum	 	= 3
+monsterNum	 	= 4
 bulletNum		= 4
 animateNum    	= 32
 
@@ -111,14 +111,17 @@ IDB_ARROW       EQU 120
 IDB_SODIER		EQU 121
 IDB_MAGIC		EQU 122
 IDB_TURRET		EQU 123
-IDB_ARROW_UPGRADE   EQU 124
-IDB_SODIER_UPGRADE	EQU 125
-IDB_MAGIC_UPGRADE	EQU 126
-IDB_TURRET_UPGRADE	EQU 127
+IDB_BLANKCLICK  EQU 124
 
-IDB_BULLET		 EQU 128
+IDB_BULLET		 EQU 127
 
 IDB_ANIMATE 		EQU	140
+
+; Ω· ¯Õº∆¨
+IDB_END         EQU 188
+IDB_VICTORY     EQU 188
+IDB_DEFEAT      EQU 189
+END_BUTTON_POS      Coord <247, 400>
 
 ; Ω· ¯Õº∆¨
 IDB_END         EQU 188
