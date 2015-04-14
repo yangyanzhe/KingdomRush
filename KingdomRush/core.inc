@@ -16,6 +16,7 @@ EACH_ROUND_ENEMY_TYPE dd 3 dup(0),
                          100 dup(0)
 
 APPEAR_INTERVAL dd 30, 20, 10, 8, 4
+
 ENEMY_LIFE_0 = 40
 ENEMY_MONEY_0 = 10
 
