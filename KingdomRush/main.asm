@@ -846,6 +846,8 @@ CheckSignClicked2:
         cmp  cursorPosition.y, eax
         ja   CheckSignClicked3
 
+        cmp  (Tower PTR [ebx]).Tower_Type, 4
+        ja   CheckSignClicked4
         add  (Tower PTR [ebx]).Tower_Type, 4
         jmp  CheckSignClicked4
 
