@@ -174,6 +174,40 @@ PauseGame PROC
     ret
 PauseGame ENDP
 
+;----------------------------------------------------------------------
+CheckLoseGame PROC
+;
+;ÅÐ¶ÏÍæ¼ÒÊÇ·ñÊ§°Ü
+;----------------------------------------------------------------------
+    pushad
+    mov eax, Game.Player_Life
+    .IF eax == 0
+        mov Game.State, 2
+    .ENDIF
+    popad
+    ret
+CheckLoseGame ENDP
+
+;----------------------------------------------------------------------
+CheckWinGame PROC
+;
+;ÅÐ¶ÏÍæ¼ÒÊÇ·ñÊ¤Àû
+;----------------------------------------------------------------------
+    pushad
+    mov eax, Game.Next_Round
+    .IF eax == ROUND_NUMBER
+        mov eax, Game.Enemy_Num
+        .IF eax == 0
+            mov eax, Game.Player_Life
+            .IF eax > 0
+                mov Game.State, 1
+            .ENDIF
+        .ENDIF
+    .ENDIF
+    popad
+    ret
+CheckWinGame ENDP
+
 ;----------------------------------------------------------------------   
 UpdateEnemies PROC
     LOCAL pRound:DWORD
@@ -248,7 +282,10 @@ Loop_EnemyMove:
     mov edi, Game.Station_Num
     .IF esi == edi
         INVOKE DeleteEnemy, edx
-        dec Game.Player_Life
+        mov eax, Game.Player_Life
+        .IF eax > 0
+            dec Game.Player_Life
+        .ENDIF
         sub ebx, TYPE DWORD
         dec edx
     .ENDIF

@@ -99,4 +99,9 @@ AOEAttack PROTO,
 
 AddMoney PROTO,
     Money: DWORD
+
+CheckWinGame PROTO
+
+CheckLoseGame PROTO
+
 ENDIF
