@@ -929,7 +929,11 @@ LMouseProc_Ended PROC,
     add     eax, buttonHandler[0].bHeight
     cmp     eax, cursorPosition.y
     jl      LMouseProc_EndedExit
+    INVOKE  InitMapInfo
     INVOKE  LoadGameInfo
+    INVOKE  mciSendCommand,Mp3DeviceID,MCI_CLOSE,0,0
+	INVOKE  PlayMp3File, hWnd, ADDR MusicFileName 
+	mov     countTime, 0
     mov     Game.State, 1
 
 LMouseProc_EndedExit:

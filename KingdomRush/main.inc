@@ -57,7 +57,7 @@ towerNum    	= 5
 signNum         = 8
 blankSignNum    = 5
 towerSignNum    = 3
-monsterNum	 	= 1
+monsterNum	 	= 3
 bulletNum		= 4
 animateNum    	= 32
 

@@ -51,6 +51,8 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
 ;----------------------------------------------------------------------
     INVOKE  LoadGameMap
     mov     Game.State, 0
+    mov     Game.Tick, 0
+    mov     Game.Enemy_Num, 0
     mov     Game.Player_Life, 20
     mov     Game.Player_Money, 220
     mov     Game.Start_Pos.x, 320
@@ -221,7 +223,7 @@ UpdateEnemies PROC
         jmp Jump1
     .ENDIF
     INVOKE GetRound, Game.Next_Round
-    mov ebx, eax  
+    mov ebx, eax
     mov eax, (Round PTR [ebx]).Trigger_Tick
     .IF Game.Tick >= eax
         .IF Game.Next_Round != 0
