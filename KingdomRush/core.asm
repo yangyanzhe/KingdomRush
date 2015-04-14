@@ -51,6 +51,8 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
 ;----------------------------------------------------------------------
     INVOKE  LoadGameMap
     mov     Game.State, 0
+    mov     Game.Tick, 0
+    mov     Game.Enemy_Num, 0
     mov     Game.Player_Life, 20
     mov     Game.Player_Money, 220
     mov     Game.Start_Pos.x, 320
@@ -182,7 +184,7 @@ CheckLoseGame PROC
     pushad
     mov eax, Game.Player_Life
     .IF eax == 0
-        mov Game.State, 2
+        mov Game.State, 3
     .ENDIF
     popad
     ret
@@ -200,7 +202,7 @@ CheckWinGame PROC
         .IF eax == 0
             mov eax, Game.Player_Life
             .IF eax > 0
-                mov Game.State, 1
+                mov Game.State, 2
             .ENDIF
         .ENDIF
     .ENDIF
@@ -221,7 +223,7 @@ UpdateEnemies PROC
         jmp Jump1
     .ENDIF
     INVOKE GetRound, Game.Next_Round
-    mov ebx, eax  
+    mov ebx, eax
     mov eax, (Round PTR [ebx]).Trigger_Tick
     .IF Game.Tick >= eax
         .IF Game.Next_Round != 0
