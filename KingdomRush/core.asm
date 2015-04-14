@@ -146,9 +146,13 @@ GetEnemyLife PROC USES ebx ecx edx,
 ;----------------------------------------------------------------------
     mov ebx, OFFSET ENEMY_LIFE
     mov ecx, _number
+    .IF ecx == 0
+        jmp GetEnemyLifeExit
+    .ENDIF
 L1:
     add ebx, TYPE DWORD
     loop L1
+GetEnemyLifeExit:
     mov eax, [ebx]
     ret
 GetEnemyLife ENDP
@@ -159,9 +163,13 @@ GetEnemyMoney PROC USES ebx ecx edx,
 ;----------------------------------------------------------------------
     mov ebx, OFFSET ENEMY_MONEY
     mov ecx, _number
+    .IF ecx == 0
+        jmp GetEnemyMoneyExit
+    .ENDIF
 L1:
     add ebx, TYPE DWORD
     loop L1
+GetEnemyMoneyExit:
     mov eax, [ebx]
     ret
 GetEnemyMoney ENDP
