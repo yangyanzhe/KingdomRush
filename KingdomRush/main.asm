@@ -199,7 +199,7 @@ WinProc PROC,
     .IF eax == WM_TIMER
       .IF Game.State == 0
         INVOKE 	TimerProc_Prepared, hWnd
-      .ELSEIF Game.State > 0
+      .ELSEIF Game.State == 1
 		INVOKE 	TimerProc_Started, hWnd
       .ELSE
         INVOKE  TimerProc_Ended, hWnd
@@ -250,7 +250,7 @@ WinProc PROC,
 	  .IF wParam == MK_LBUTTON
         .IF Game.State == 0
           INVOKE 	LMouseProc_Prepared, hWnd, cursorPosition
-        .ELSEIF Game.State > 0
+        .ELSEIF Game.State == 1
 		  INVOKE 	LMouseProc_Started, hWnd, cursorPosition
         .ELSE
           INVOKE    LMouseProc_Ended, hWnd, cursorPosition
@@ -651,6 +651,7 @@ LMouseProc_Prepared PROC,
       jl    LMouseInstruction1Next
 
       mov   Game.InstructionIndex, 0
+      mov   Game.ButtonIndex, 0
       inc   Game.State
       jmp   LMouseProc_PreparedExit
 
@@ -685,6 +686,7 @@ LMouseInstruction1Next:
       jl    LMouseInstruction2Next
 
       mov   Game.InstructionIndex, 0
+      mov   Game.ButtonIndex, 0
       inc   Game.State
       jmp   LMouseProc_PreparedExit
 
@@ -719,6 +721,7 @@ LMouseInstruction2Next:
       jl    LMouseProc_PreparedExit
 
       mov   Game.InstructionIndex, 0
+      mov   Game.ButtonIndex, 0
       inc   Game.State
     .ENDIF
 
@@ -926,6 +929,7 @@ LMouseProc_Ended PROC,
     add     eax, buttonHandler[0].bHeight
     cmp     eax, cursorPosition.y
     jl      LMouseProc_EndedExit
+    INVOKE  LoadGameInfo
     mov     Game.State, 1
 
 LMouseProc_EndedExit:
@@ -1459,9 +1463,10 @@ PaintProc PROC,
     mov     hTotalLifePen, eax
 
     ; 判断是否处于等待页面
+    cmp     Game.State, 1
+    je      AlreadyStarted
     cmp     Game.State, 0
-    jg      AlreadyStarted
-    jl      AlreadyEnded
+    jg      AlreadyEnded
 
     ; 游戏尚未开始
     ; Start页面
@@ -1551,7 +1556,7 @@ PaintProc PROC,
 
 AlreadyEnded:
     mov     ebx, OFFSET endHandler
-    .IF Game.State == -2
+    .IF Game.State == 3
       add   ebx, TYPE BitmapInfo
     .ENDIF
     INVOKE 	SelectObject, imgDC, (BitmapInfo PTR [ebx]).bHandler
