@@ -1245,6 +1245,10 @@ TransferNumToString PROC,
 	push esi
 	push edi
 
+    .IF eax > 255
+        mov eax, eax
+    .ENDIF
+
 	mov	num, eax
 	mov cl, 10
 	mov ch, 0

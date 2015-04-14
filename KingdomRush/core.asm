@@ -355,6 +355,7 @@ Search_Enemy_Loop:
     mov ebx, [edi]
     mov edx, (Enemy PTR [ebx]).Current_Pos.x
     mov eax, (Tower PTR [esi]).Pos.x
+    add eax, 40
     .IF eax < edx
         xchg eax, edx
     .ENDIF
@@ -366,6 +367,7 @@ Search_Enemy_Loop:
 
     mov edx, (Enemy PTR [ebx]).Current_Pos.y
     mov eax, (Tower PTR [esi]).Pos.y
+    sub eax, 28
     .IF eax < edx
         xchg eax, edx
     .ENDIF
@@ -423,10 +425,10 @@ InsertBullet:
     .ENDIF
     mov (Bullet PTR [ebx]).Bullet_Type, eax
     mov eax, (Tower PTR [esi]).Pos.x
-    add eax, 20 ;微调
+    add eax, 40 ;微调
     mov (Bullet PTR [ebx]).Pos.x, eax
     mov eax, (Tower PTR [esi]).Pos.y
-    sub eax, 20 ;微调
+    sub eax, 28 ;微调
     mov (Bullet PTR [ebx]).Pos.y, eax
     mov (Bullet PTR [ebx]).Target, edi
     mov (Bullet PTR [ebx]).Gesture, 0
@@ -577,9 +579,21 @@ BulletMove PROC,
         mov eax, c_x
         mov edx, e_x
         .IF eax < edx
-            add c_x, 6
+            mov edi, edx
+            sub edi, 50
+            .IF eax < edi
+                add c_x, 15
+            .ELSE
+                add c_x, 8
+            .ENDIF
         .ELSEIF eax > edx
-            sub c_x, 6
+            mov edi, edx
+            add edi, 50
+            .IF eax > edi
+                sub c_x, 15
+            .ELSE
+                sub c_x, 8
+            .ENDIF
         .ENDIF
 
         sub c_y, 20
