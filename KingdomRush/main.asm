@@ -431,6 +431,7 @@ InitMapInfo PROC
     mov     edx, OFFSET Game.TowerArray
 InitTower:  
     mov     (Tower PTR [edx]).Tower_Type, 0     ;塔的初始类型为0（空地）
+    mov     (Tower PTR [edx]).Degree, 0
     mov     (Tower PTR [edx]).Range, 80         ;塔的攻击范围
     mov     eax, (Coord PTR [ebx]).x
     mov     (Tower PTR [edx]).Pos.x, eax
@@ -851,19 +852,18 @@ CheckSignClicked2:
         cmp  cursorPosition.y, eax
         ja   CheckSignClicked3
 
-        cmp  (Tower PTR [ebx]).Tower_Type, 4
-        ja   CheckSignClicked4
-
         mov  edi, (Tower PTR [ebx]).Tower_Type
         INVOKE GetTowerCost, edi
         mov  edx, eax
         add  edi, 4
         INVOKE GetTowerCost, edi
-        sub  edx, eax
-        cmp  edx, Game.Player_Money
+        sub  eax, edx
+        cmp  eax, Game.Player_Money
         ja   CheckSignClicked4
-        sub  Game.Player_Money, edx
-        add  (Tower PTR [ebx]).Tower_Type, 4
+        sub  Game.Player_Money, eax
+        mov  (Tower PTR [ebx]).Degree, 4
+        mov  eax, (Tower PTR [ebx]).Attack
+        add  (Tower PTR [ebx]).Attack, eax
         jmp  CheckSignClicked4
 
 CheckSignClicked3:
@@ -885,10 +885,13 @@ CheckSignClicked3:
         cmp  cursorPosition.y, eax
         ja   CheckSignClicked4
 
-        INVOKE GetTowerCost, (Tower PTR [ebx]).Tower_Type
+        mov  edi, (Tower PTR [ebx]).Tower_Type
+        add  edi, (Tower PTR [ebx]).Degree
+        INVOKE GetTowerCost, edi
         shr  eax, 1
         add  Game.Player_Money, eax
         mov  (Tower PTR [ebx]).Tower_Type, 0
+        mov  (Tower PTR [ebx]).Degree, 0
 CheckSignClicked4:
         mov  Game.IsClicked, 0
         jmp  LMouseProcExit
@@ -989,6 +992,7 @@ DrawBlank:
 DrawTowers:
     push    ecx
     mov     eax, (Tower PTR [ebx]).Tower_Type
+    add     eax, (Tower PTR [ebx]).Degree
     cmp     eax, 0
     je      DrawTowers0
 
@@ -996,7 +1000,7 @@ DrawTowers:
 	.IF		edx == 1
 		jmp DrawTowers0
 	.ENDIF
-
+    
     mov     edx, OFFSET towerHandler
     .WHILE  eax > 0
       add   edx, TYPE BitmapInfo

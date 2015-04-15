@@ -54,7 +54,7 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
     mov     Game.Tick, 0
     mov     Game.Enemy_Num, 0
     mov     Game.Player_Life, 20
-    mov     Game.Player_Money, 220
+    mov     Game.Player_Money, 1000
     mov     Game.Start_Pos.x, 320
     mov     Game.Start_Pos.y, 0
     mov     Game.End_Pos.x, 699
@@ -481,9 +481,16 @@ Search_Enemy_Loop:
     mov edx, (Tower PTR [esi]).Tower_Type
     .IF edx == 4
         mov (Tower PTR [esi]).AnimatePlaying, 1
-        mov edx,(Tower PTR [esi]).Pos.y
-        sub edx, 56
-        INVOKE InsertAnimate, (Tower PTR [esi]).Pos.x, edx, 3
+        mov eax, (Tower PTR [esi]).Degree
+        .IF eax == 0
+            mov edx,(Tower PTR [esi]).Pos.y
+            sub edx, 56
+            INVOKE InsertAnimate, (Tower PTR [esi]).Pos.x, edx, 3
+        .ELSE
+            mov edx,(Tower PTR [esi]).Pos.y
+            sub edx, 73
+            INVOKE InsertAnimate, (Tower PTR [esi]).Pos.x, edx, 4
+        .ENDIF
     .ENDIF
     jmp SearchEnemy_Exit
 SearchEnemy_Continue:
@@ -589,7 +596,10 @@ Loop_BulletMove:
     .ENDIF
     add ebx, TYPE Bullet
     add edi, 1
-    loop Loop_BulletMove
+    dec ecx
+    .IF ecx > 0
+        jmp Loop_BulletMove
+    .ENDIF
 UpdateBulletsExit:
     popad
     ret
@@ -1000,7 +1010,7 @@ UpdateAnimateLoop:
     mov edx, (Animate PTR [ebx]).Gesture
     .IF edx == AnimateTotal
         mov edx, (Animate PTR [ebx]).Animate_Type
-        .IF edx == 3
+        .IF edx == 3 || edx == 4
             mov edi, OFFSET Game.TowerArray
             mov ecx, Game.Tower_Num
         L1:
@@ -1244,7 +1254,7 @@ EnemyCheckDie_Exit:
 EnemyCheckDie ENDP
 
 ;----------------------------------------------------------------------   
-DeleteEnemy PROC USES ebx edi ecx eax,
+DeleteEnemy PROC USES ebx edi ecx eax esi edx,
     _EnemyNumber: DWORD
 ;
 ;怪物死亡，将怪物从队列中删除
@@ -1268,7 +1278,7 @@ EnemyQueueMoveForward:
     add     ebx, 4
     loop    EnemyQueueMoveForward
 DeleteEnemyExit:
-    dec     Game.Enemy_Num
+    dec     Game.Enemy_Num 
     ret
 DeleteEnemy ENDP
 
