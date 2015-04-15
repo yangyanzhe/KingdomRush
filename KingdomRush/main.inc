@@ -59,7 +59,7 @@ blankSignNum    = 5
 towerSignNum    = 3
 monsterNum	 	= 4
 bulletNum		= 4
-animateNum    	= 32
+animateNum    	= 40
 
 instructionHandler  BitmapInfo instructionNum DUP(<>)
 buttonHandler       BitmapInfo buttonNum DUP(<>)
