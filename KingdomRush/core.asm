@@ -54,7 +54,7 @@ LoadGameInfo PROC USES ecx ebx esi edi eax edx
     mov     Game.Tick, 0
     mov     Game.Enemy_Num, 0
     mov     Game.Player_Life, 20
-    mov     Game.Player_Money, 220
+    mov     Game.Player_Money, 10000
     mov     Game.Start_Pos.x, 320
     mov     Game.Start_Pos.y, 0
     mov     Game.End_Pos.x, 699
